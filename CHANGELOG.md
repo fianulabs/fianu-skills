@@ -6,7 +6,7 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [0.1.0] — TBD
+## [0.1.0] — 2026-06-09
 
 ### Added
 - Initial 17-skill release. See `docs/architecture.md` for the skill inventory.
