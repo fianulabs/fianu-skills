@@ -1,6 +1,6 @@
 # Architecture
 
-`fianu-skills` ships 17 skills in 4 groups. Orchestrator skills (Group D) are the entry points an agent typically loads first; they declare their dependencies via `## Loads:` and the agent loads each one in turn.
+`fianu-skills` ships 20 skills in 5 groups. Orchestrator skills (Group D) are the entry points an agent typically loads first; they declare their dependencies via `## Loads:` and the agent loads each one in turn.
 
 ## Skill groups
 
@@ -40,6 +40,14 @@
 | `managing-ticket-approvals` | All of the above + `working-with-llm-context-rules` + `computing-decision-confidence` |
 | `converting-frameworks-to-controls` | `parsing-framework-documents`, `matching-existing-controls`, `working-with-evidence-plugins`, `writing-rego-rules`, `designing-policy-templates`, `placing-entities-in-hierarchy`, `working-with-entities`, `using-fianu-best-practices` |
 | `summarizing-evidence` | (none — atomic one-shot skill) |
+| `deploying-entities-as-code` | `deploying-entities-yaml`, `deploying-entities-terraform` |
+
+### Group E — Entities-as-code (2)
+
+| Skill | Purpose |
+|---|---|
+| `deploying-entities-yaml` | On-disk YAML packages and the `fianu console plan/test/deploy` CLI. Canonical home for the controls/ + policies/ directory layout, `spec.yaml` / `contents.yaml` / `rule.rego` file matrix, and the multipart upload contract. |
+| `deploying-entities-terraform` | The `fianulabs/fianu` Terraform provider. Canonical home for `fianu_control` / `fianu_policy` / `fianu_gate` / `fianu_index` resource shapes, the `fianu_control_test` action, OIDC vs static-bearer auth, and the X-Fianu-Raw-Content wire format. |
 
 ## Composition model
 

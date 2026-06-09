@@ -36,6 +36,9 @@ Key gotchas (load the canonical skill before acting on any of these):
 | "Approve / deny this ticket" / autonomous workflow | `managing-ticket-approvals` |
 | "Summarize this finding/violation/attestation" | `summarizing-evidence` |
 | "Ingest this compliance framework" / map to controls | `converting-frameworks-to-controls` |
+| "Deploy entities from source" / `fianu console deploy` / Terraform `fianu_*` | `deploying-entities-as-code` |
+| Authoring on-disk YAML control packages | `deploying-entities-yaml` |
+| Authoring Fianu entities in Terraform HCL | `deploying-entities-terraform` |
 | Reading/writing tickets without a full workflow | `working-with-tickets` |
 | Reading/writing controls/policies/gates/exceptions | `working-with-entities` |
 | Reading LLM-context-rule pods | `working-with-llm-context-rules` |
