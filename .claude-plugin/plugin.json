@@ -1,0 +1,10 @@
+{
+  "name": "fianu-skills",
+  "description": "Skills for building AI agents that operate on the Fianu compliance platform.",
+  "version": "0.1.0",
+  "author": { "name": "Fianu Labs", "email": "support@fianu.io" },
+  "homepage": "https://github.com/fianulabs/fianu-skills",
+  "repository": "https://github.com/fianulabs/fianu-skills",
+  "license": "Apache-2.0",
+  "keywords": ["fianu", "compliance", "controls", "policies", "governance", "skills"]
+}
