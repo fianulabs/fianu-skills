@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+# Claude Code SessionStart hook for fianu-skills.
+# Emits a system-reminder telling the agent to load the bootstrap skill
+# before responding to anything Fianu-related.
+
+cat <<'EOF'
+<system-reminder>
+fianu-skills is installed. If the user mentions the Fianu platform, controls,
+policies, exceptions, gates, tickets, attestations, evidence, or compliance
+frameworks, invoke the `using-fianu-skills` skill before responding so you
+load the right downstream skill for the task.
+</system-reminder>
+EOF
