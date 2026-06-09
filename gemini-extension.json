@@ -1,0 +1,6 @@
+{
+  "name": "fianu-skills",
+  "description": "Skills for building AI agents that operate on the Fianu compliance platform.",
+  "version": "0.1.0",
+  "contextFileName": "GEMINI.md"
+}
