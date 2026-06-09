@@ -1,0 +1,24 @@
+{
+  "name": "fianu-skills",
+  "version": "0.1.0",
+  "description": "Skills for building AI agents that operate on the Fianu compliance platform.",
+  "author": { "name": "Fianu Labs", "email": "support@fianu.io" },
+  "homepage": "https://github.com/fianulabs/fianu-skills",
+  "repository": "https://github.com/fianulabs/fianu-skills",
+  "license": "Apache-2.0",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Fianu Skills",
+    "shortDescription": "Build AI agents on the Fianu compliance platform.",
+    "developerName": "Fianu Labs",
+    "category": "Compliance",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "defaultPrompt": [
+      "Analyze the open Fianu approval tickets and post analysis comments.",
+      "Ingest this compliance framework and map requirements to Fianu controls."
+    ],
+    "websiteURL": "https://fianu.io",
+    "brandColor": "#0A2540",
+    "logo": "./assets/app-icon.png"
+  }
+}
