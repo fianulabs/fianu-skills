@@ -7,5 +7,54 @@ description: Use when starting any conversation involving the Fianu platform —
 
 ## Overview
 
-Stub — body content arrives in Phase 1 per
-`docs/superpowers/plans/2026-06-09-fianu-skills-plugin-restructure.md`.
+This skill bootstraps `fianu-skills`. When the user mentions the Fianu platform
+or any of its concepts (controls, policies, exceptions, gates, tickets,
+attestations, evidence, frameworks), load this skill first to route to the
+right downstream skill.
+
+## API conventions
+
+All skills in this plugin call the Fianu HTTP API. The conventions are
+documented once in `references/api-conventions.md`. Read it before making any
+API calls.
+
+Key gotchas (load the canonical skill before acting on any of these):
+
+- Ticket activity writes: the `actor` is set by the auth token, **never** the
+  request body. → see `working-with-tickets`.
+- Approvers are nested inside the condition's config, not at the top level.
+  → see `working-with-tickets`.
+- LLM context rule absence caps confidence at 0.70. → see
+  `working-with-llm-context-rules`.
+- OPA Rego rules use v1 syntax. → see `writing-rego-rules`.
+
+## Routing — load the skill that matches the user's intent
+
+| User intent | Load this skill |
+|---|---|
+| "Analyze this ticket" / fact-only ticket commentary | `analyzing-tickets` |
+| "Approve / deny this ticket" / autonomous workflow | `managing-ticket-approvals` |
+| "Summarize this finding/violation/attestation" | `summarizing-evidence` |
+| "Ingest this compliance framework" / map to controls | `converting-frameworks-to-controls` |
+| Reading/writing tickets without a full workflow | `working-with-tickets` |
+| Reading/writing controls/policies/gates/exceptions | `working-with-entities` |
+| Reading LLM-context-rule pods | `working-with-llm-context-rules` |
+| Picking a plugin / discovering evidence schemas | `working-with-evidence-plugins` |
+| Comparing two policy versions | `diffing-policies` |
+| Producing a confidence score for an autonomous action | `computing-decision-confidence` |
+| Writing an OPA Rego rule | `writing-rego-rules` |
+| Designing a YAML policy template | `designing-policy-templates` |
+| Deciding domain/collection placement | `placing-entities-in-hierarchy` |
+| Checking if an existing control covers a requirement | `matching-existing-controls` |
+| Parsing a framework document (Excel/CSV/PDF) | `parsing-framework-documents` |
+| Reasoning about Fianu semantics in general | `using-fianu-best-practices` |
+
+## Cross-harness tool names
+
+Skills in this plugin reference tool names in the Claude Code dialect (`Skill`,
+`Bash`, `Read`, `Edit`, `Write`, `TaskCreate`, `WebFetch`). When invoking
+fianu-skills from a different harness:
+
+- **Codex CLI:** see `references/codex-tools.md`
+- **Gemini CLI:** see `references/gemini-tools.md`
+- **Claude Code:** no mapping needed; tool names are native.
