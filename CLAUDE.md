@@ -4,62 +4,51 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-This is the **central hub for Fianu agent skills** — markdown skill files consumed by LLM agents that act on the Fianu platform (compliance/governance for software delivery). There is no build step, no test runner, no application code: every file here is prose that an agent loads at runtime. Edits are validated by reading, not compiling.
-
-Skills here are referenced/loaded by agents running against the platform; they encode workflow logic, API contracts, output schemas, and decision rules. Treat each skill file as a contract between the agent runtime and the Fianu HTTP API — getting the field names, endpoints, and decision thresholds wrong silently breaks production behavior.
+`fianu-skills` is a multi-harness skill plugin distributed to customers building AI agents on the Fianu compliance platform. It ships skills for Claude Code, Codex CLI, and Gemini CLI. There is no application code — everything here is markdown skill files, JSON manifests, and shell scripts.
 
 ## Repo layout
 
-```
-FIANU.md                          ← Domain source of truth (905 lines). Entity hierarchy, asset model,
-                                    policy layering semantics, control design rules. Cited by every skill.
-entry-points/                     ← Top-level skills an agent is dispatched into directly.
-  fianu-analysis.md               ← Posts factual analysis comments on approval tickets. No decisions.
-  fianu-approval-manager.md       ← Autonomous approve/deny on tickets, gated by confidence + LLM context rules.
-  fianu-evidence-summarizer.md    ← Summarizes findings/violations/attestations as strict JSON.
-  fianu-framework-to-rule-converter.md  ← Ingests compliance frameworks, maps requirements to controls/Rego.
-```
-
-Note: entry-point skills declare `**Loads**: fianu-shared.md, fianu-policies.md, fianu-controls.md, fianu-default-analysis-guidance.md` — **those shared files do not yet exist in this repo**. When extracting shared logic out of entry-points, create those files at the repo root (or in a `shared/` directory) and keep the `Loads` declarations honest.
-
-## Conventions that span every skill
-
-1. **FIANU.md is the source of truth.** Entity hierarchy, asset definitions, policy layering with the override operator `P_x ◁ P_y := (P_x \ P_y) ∪ P_y`, control scope rules, and naming conventions all live there. When a skill's behavior contradicts FIANU.md, FIANU.md wins — fix the skill.
-2. **Two-skill split for ticket work.** `fianu-analysis.md` is fact-only (no confidence scores, no opinions, no LLM context rules). `fianu-approval-manager.md` is decision-making (confidence-gated autonomous actions). Don't bleed analysis-only language into approval-manager or vice versa.
-3. **Actor identity is set by the auth token, not the request body.** Every `POST /tickets/:uuid/activities` example must omit `actor` — the Fianu API extracts it from `h.User()`. The agent's bot identity is `bot|fianu-agent`. Skills that show `"actor": "..."` in a request body are wrong.
-4. **Confidence gate thresholds** (defined in `fianu-approval-manager.md` §7): `≥0.90` autonomous, `0.75–0.89` autonomous + notify, `0.50–0.74` advisory only, `<0.50` human review. No LLM context rule pod → cap confidence at 0.70.
-5. **Approver lookup gotcha.** Approvers live in `condition.config.resolved_approvers`, not a top-level condition field. Easy to get wrong.
-6. **OPA Rego is v1.** All generated rules use `import rego.v1` and `if` keyword syntax. Map plugin evidence to `input.detail.*`, policy values to `data.*`.
-7. **Output format is part of the contract.** `fianu-evidence-summarizer.md` requires raw JSON with no markdown fences. Ticket activity comments use the exact `## Agent Analysis` / `## Analysis:` headers shown in their respective entry-points. Changing the template silently breaks downstream UI rendering.
-
-## Cross-repo context
-
-This repo is a sibling of the Fianu monorepo and lives under `~/Documents/fianulabs/core/`. Skills frequently encode contracts that originate in those sibling repos — verify against the code, not just memory:
-
-- **`../core/`** — Go backend. Entity handlers/deployers, ticket API, controls/policies/gates services, attestation pipeline. When a skill references an endpoint (`GET /tickets/:uuid`, `POST /create/control`, `GET /pods/entities/{id}/llm_context_rule/{key}`), the handler lives here. Verify request/response shape before changing a skill's API section.
-- **`../fianu-plugins/`** — Plugin source. The plugin catalog in `fianu-framework-to-rule-converter.md` §5 (Sonarqube, Snyk, Prisma, Sigstore, GitHub Actions, …) and the `producer` field in `GET /controls/:entity_key/schemas?producer=...` must match what's actually shipped here.
-- **`../controllers/`** — Resource controllers; relevant when skills touch attestation or evaluation orchestration.
-- **`../terraform-provider-fianu/`** — Entity-as-code surface. If a skill describes how a control or policy is deployed from source, the provider's resource schema is the ground truth.
-- **`../entities-as-code/` / `../core/pkg/entities_files/`** — Entity file formats referenced by deploy-from-source skills.
-
-When updating a skill, the workflow is: read FIANU.md → read the relevant sibling-repo code → update the skill → verify by grep'ing the skill back against the code. There is no compile-time check; staleness compounds silently.
+- `skills/` — the canonical skill library (17 skills, 4 groups). See `docs/architecture.md` for the full inventory.
+- `.claude-plugin/` / `.codex-plugin/` / `gemini-extension.json` — per-harness plugin manifests.
+- `hooks/` — Claude Code SessionStart hook that bootstraps `using-fianu-skills`.
+- `scripts/` — `bump-version.sh` (lockstep version updates) and `validate-skills.sh` (frontmatter + canary-string lint).
+- `docs/architecture.md` and `docs/authoring-skills.md` — design docs for contributors.
+- `docs/superpowers/specs/` and `docs/superpowers/plans/` — the restructure spec and plan that produced this layout.
 
 ## Working on skills
 
-**Editing an existing skill.** Skills are long and structured. Use `Read` on the specific section, `Edit` with enough surrounding context to keep `old_string` unique, and preserve section numbering (§1, §2, …) — entry-points cross-reference each other by section number.
+**Edit:** Use `Read` on the specific SKILL.md, `Edit` with enough surrounding context to keep `old_string` unique. Preserve the YAML frontmatter exactly — `validate-skills.sh` will reject changes to `name:` or unknown fields.
 
-**Adding a new entry-point skill.** Follow the existing pattern: top-of-file `Loads: ...` declaration, then numbered sections (Purpose/Overview → Data Model → API Reference → Workflow → Output Format → Edge Cases). Cite FIANU.md as the domain source of truth in the Purpose section.
+**Add a new skill:** Create `skills/<kebab-case-name>/SKILL.md` with frontmatter (`name:` matching the directory, `description:` tuned as a load trigger). Optional `references/*.md` for ancillary content. See `docs/authoring-skills.md`.
 
-**Extracting shared logic.** When two entry-points repeat the same content (the Ticket/Condition/Activity data model, the diff methodology, the confidence framework), promote it to a `fianu-shared.md` / `fianu-policies.md` / `fianu-controls.md` file and replace the duplicated section with a reference. The entry-points already declare these files in `**Loads**:` — match those names.
+**Cross-skill dependencies:** Add a `## Loads` section at the top of the consumer skill's SKILL.md listing the skill names it depends on, in invocation order.
 
-**Verifying changes.** No automated checks exist. Manually:
-- Re-read the skill end-to-end after edits to confirm section numbering and cross-references still resolve.
-- Grep sibling repos for any endpoint, field name, or constant you added/changed (`rg "/tickets/:uuid/activities" ../core/`).
-- Check that any JSON examples are valid JSON (the `fianu-evidence-summarizer.md` contract is strict — no trailing commas, no markdown fences).
+**Single canonical home rule:** every fact lives in one SKILL.md. Other skills reference it via `Loads:`. `validate-skills.sh` enforces this with canary strings — currently `config.resolved_approvers` → `working-with-tickets`, `bot|fianu-agent` → `working-with-tickets`, `GET /pods/entities` → `working-with-llm-context-rules`, `import rego.v1` → `writing-rego-rules`. Canary check runs on SKILL.md bodies only; frontmatter descriptions are load triggers and may legitimately reference canonical keywords.
+
+## Versioning
+
+`scripts/bump-version.sh <new-version>` is the only supported way to change the plugin version. It updates `package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `.codex-plugin/plugin.json`, and `gemini-extension.json` in lockstep, and inserts a CHANGELOG.md heading. Editing manifests by hand will drift versions and break `/plugin install`.
+
+## Validation
+
+`scripts/validate-skills.sh` checks frontmatter (name matches directory, description present) and canary-string locations. Run it before every commit; CI will run it on every PR once configured.
+
+## Cross-repo context
+
+Skill content depends on contracts that originate in sibling repos (`~/Documents/fianulabs/core/`):
+
+- **`../core/`** — Go backend. Every endpoint a skill references (`GET /tickets/:uuid`, `POST /create/control`, `GET /pods/entities/.../llm_context_rule/...`) has a handler here. Verify request/response shape against the handler before changing API tables.
+- **`../fianu-plugins/`** — Plugin source. `skills/working-with-evidence-plugins/references/plugin-catalog.md` must match what's shipped here.
+- **`../controllers/`** — Resource controllers for attestation/evaluation orchestration.
+- **`../terraform-provider-fianu/`** — Entity-as-code surface. Out of scope for v0.1; lives in a future `fianu-iac` plugin.
+
+There is no compile-time check that skills match sibling-repo state. Staleness compounds silently — when in doubt, grep the sibling repo.
 
 ## Things to avoid
 
-- Don't introduce subjective language ("risky", "concerning", "warrants caution") into `fianu-analysis.md`. That skill is fact-only by design — see its §6 "Presentation Rules".
-- Don't add a confidence score to `fianu-analysis.md` output. Confidence belongs to `fianu-approval-manager.md` only.
+- Don't introduce subjective language ("risky", "concerning", "warrants caution") into `analyzing-tickets`. That skill is fact-only by design.
+- Don't add a confidence score to `analyzing-tickets`. Confidence belongs to `managing-ticket-approvals` (via `computing-decision-confidence`).
 - Don't invent plugin names, control entity keys, or endpoint paths. If you can't ground it in `../core/` or `../fianu-plugins/`, leave it out.
-- Don't change the `*Fianu Agent v1.0 | …*` footer format in activity comments — the UI parses it.
+- Don't bypass `bump-version.sh`. Editing a manifest version directly always introduces drift.
+- Don't edit frontmatter `name:` after a skill ships. The directory name and the frontmatter name must always match, and changing it would break customer installs at the load-trigger level.
+- Don't restate canonical facts in non-canonical skills. If you find yourself typing a canary string (`config.resolved_approvers`, `GET /pods/entities`, `import rego.v1`, etc.) outside its canonical owner, you're duplicating content — add a `Loads:` reference instead. `validate-skills.sh` will catch the duplicate.
