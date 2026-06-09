@@ -77,24 +77,37 @@ for dir in $skill_dirs; do
 done
 
 # --- Check 4: canary strings ---
+# Canaries are scanned in SKILL.md BODIES only — everything after the closing
+# `---` of the YAML frontmatter. Descriptions in frontmatter are load-trigger
+# text and naturally reference canonical keywords; only the body content
+# carries the canonical-home obligation.
+#
 # TAB-separated; use printf to declare the separator portably.
 TAB="$(printf '\t')"
 echo "$CANARIES" | while IFS="$TAB" read -r canary owner; do
     [ -z "$canary" ] && continue
 
-    # Files where the canary appears in a SKILL.md body. Use -F (fixed string)
-    # because canaries may contain regex metacharacters.
-    hits="$(grep -rlF -- "$canary" skills/ 2>/dev/null | grep '/SKILL\.md$' || true)"
+    # Build a list of SKILL.md files whose BODY contains the canary.
+    hits=""
+    for d in $skill_dirs; do
+        s="$d/SKILL.md"
+        [ -f "$s" ] || continue
+        # Body = everything after the second `---` line.
+        body="$(awk 'NR>1 && /^---$/ {found=1; next} found' "$s")"
+        if printf '%s' "$body" | grep -qF -- "$canary"; then
+            hits="$hits $s"
+        fi
+    done
 
     if [ -z "$hits" ]; then
-        echo "WARN: canary '$canary' not found in any SKILL.md (expected owner: $owner)" >&2
+        echo "WARN: canary '$canary' not found in any SKILL.md body (expected owner: $owner)" >&2
         continue
     fi
 
     for h in $hits; do
         dir="$(basename "$(dirname "$h")")"
         if [ "$dir" != "$owner" ]; then
-            echo "FAIL: canary '$canary' appears in skills/$dir/SKILL.md but canonical home is skills/$owner/SKILL.md" >&2
+            echo "FAIL: canary '$canary' appears in skills/$dir/SKILL.md body but canonical home is skills/$owner/SKILL.md" >&2
             echo "_FAIL_" > /tmp/validate-skills.fail
         fi
     done
