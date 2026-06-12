@@ -51,6 +51,36 @@ Sum the classifications:
 Aggregate direction surfaces in analysis and approval workflows as a
 one-line summary: "Direction: net relaxation".
 
+## Variation-aware diffing
+
+Modern policies carry `detail.variations[]` rather than a single threshold
+block, so a naive whole-document key-path walk is wrong: variations are an
+ordered array, and matching them by array index reports spurious
+relax/tighten changes whenever a variation is inserted or reordered.
+
+Diff variations like this:
+
+1. **Match by criteria identity, not array position.** Pair a `before`
+   variation with the `after` variation whose `criteria` resolves to the
+   same scope (same `asset.type` + same `expressions`/`combine_with`, or
+   the same `indexes` reference). An unmatched variation is `key_added` /
+   `key_removed` (a whole tier appeared or disappeared).
+2. **Diff each matched variation's `policy` map** with the key-path method
+   above.
+3. **Classify variation-level field changes:**
+
+| Field change | Classification |
+|---|---|
+| `effect: apply → exempt` | `threshold_relaxed` — the control stops running for matching assets. |
+| `effect: exempt → apply` | `threshold_tightened` — the control now runs. |
+| `criteria` widened (fewer/looser expressions, broader index) | `threshold_relaxed` — more assets fall under any relaxed thresholds; narrowed criteria is the inverse. |
+| `criteria` re-pointed to a different scope with no clear widen/narrow | `value_changed_neutral`. |
+| `locked: false → true` | `value_changed_neutral` (governance, not threshold direction). |
+
+Aggregate across all variations as before. Exception policies diff the
+same way; an exception's `effect: exempt` variation removed is a
+tightening (assets return to the standard policy).
+
 ## Output format
 
 The diff produces a structured object the consumer iterates over:

@@ -44,14 +44,19 @@ flow. The difference is only in how the bytes get to the server.
 | `control` | ✅ | ✅ `fianu_control` | Full parity. |
 | `policy` | ✅ | ✅ `fianu_policy` | Full parity. |
 | `policy_exception` | ✅ (exception template) | ✅ via `fianu_policy` with `type = "exception"` | Same wire shape; CLI and provider treat exception as a policy subtype. |
-| `gate` | ⚠️ via CLI flags (`--gates`) | ✅ `fianu_gate` | Provider exposes the richer authoring surface (pods, env bindings, inline policy). |
-| `index` | ❌ | ✅ `fianu_index` | Terraform-only at v0.1. |
+| `gate` | ✅ (`type: "gate"`) | ✅ `fianu_gate` | Full parity. Inline policy + pods; the CLI auto-detects the type from the file's root `type` field. |
+| `index` | ✅ (`type: "index"`) | ✅ `fianu_index` | Reusable CEL asset-scope. The CLI deploy requires the console server's index translator (wired at `server/console/routes.go`); against a server without it, an index deploy returns `deployer not registered for type index`. |
 | `environment` | ❌ | ⏳ v0.1.x `fianu_environment` | Neither path stable yet. |
 | `target` | ❌ | ⏳ v0.1.x `fianu_target` | Neither path stable yet. |
 | `collection` | ❌ | ⏳ v0.1.x `fianu_collection` | Neither path stable yet. |
 
 When the matrix isn't at parity for an entity type, the format choice is
 forced. Otherwise it's a workflow preference (see the picker below).
+
+On the CLI path, the entity type is auto-detected from each file's
+root-level `type` field (`control`, `policy`, `exception`, `index`,
+`gate`), so controls, policies, exceptions, indexes, and gates all deploy
+in a single `fianu console deploy` pass.
 
 ## Format-parity claim — what's actually identical
 
@@ -76,9 +81,9 @@ side (no Terraform plan, no CLI activity).
 Are you in a repo that already uses one format?
 ├─ yes → keep using it (don't mix formats per entity directory)
 └─ no  → ask:
-         ├─ Do you need a gate, index, environment, target, or collection?
-         │   └─ yes → Terraform (only path that exposes them today)
-         ├─ Is this a fresh entities-as-code repo with mostly controls + policies?
+         ├─ Do you need an environment, target, or collection?
+         │   └─ yes → Terraform (only path that exposes them; still ⏳ v0.1.x)
+         ├─ Is this a fresh entities-as-code repo with controls, policies, indexes, or gates?
          │   └─ yes → YAML / CLI (closer to the official-controls layout, simpler authoring)
          └─ Are you already running Terraform for adjacent infra (Cognito, k8s, etc.)?
              └─ yes → Terraform (single apply pipeline, drift detection)
