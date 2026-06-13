@@ -6,7 +6,7 @@
     {
       "name": "fianu-skills",
       "description": "Skills for building AI agents that operate on the Fianu compliance platform.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "source": "./",
       "author": { "name": "Fianu Labs", "email": "support@fianu.io" }
     }
