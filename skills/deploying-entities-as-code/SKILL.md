@@ -115,11 +115,14 @@ For format-specific details, see:
    - Terraform: invoke the `fianu_control_test` action (or set a
      `lifecycle.action_trigger` on the resource).
 3. **Plan**:
-   - YAML: `fianu console plan ./envs/dev --project <P> --repository <R>`.
+   - YAML: `fianu console plan ./envs/dev [--project <P> --repository <R>]`.
    - Terraform: `terraform plan`.
 4. **Deploy**:
-   - YAML: `fianu console deploy ./envs/dev --project <P> --repository <R>`.
+   - YAML: `fianu console deploy ./envs/dev [--project <P> --repository <R>]`.
    - Terraform: `terraform apply`.
+
+   `--project` / `--repository` are optional attribution tags — `entities-as-code`
+   passes them, `official-controls` omits them. See `deploying-entities-yaml`.
 5. **Approval ticket handling.** Deploy creates entities in `draft` state.
    The platform opens an approval ticket targeting each new/changed
    entity. See `working-with-entities` § Write endpoints (drafts + approval
@@ -170,10 +173,12 @@ format per entity and stick with it.
 
 ### Cross-repo source-of-truth changes
 
-This skill's accuracy depends on `../core/entities-as-code/` and
-`../terraform-provider-fianu/` not drifting from the skill content. See
-the **Maintenance** section in each sub-skill for the files to refresh
-when updating.
+This skill's accuracy depends on the real working repos not drifting from
+the skill content: `../entities-as-code/` (YAML policies/exceptions),
+`../official-controls/` (YAML control packages), and
+`../fianu-cloud/environments/fianu-dev/controls/` + `../terraform-provider-fianu/`
+(Terraform). See the **Maintenance** section in each sub-skill for the files
+to refresh when updating.
 
 ## See also
 

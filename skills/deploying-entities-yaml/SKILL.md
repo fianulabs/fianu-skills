@@ -1,6 +1,6 @@
 ---
 name: deploying-entities-yaml
-description: Use when authoring or deploying Fianu entities as on-disk YAML packages with the `fianu console` CLI. Covers the envs/<env>/{controls,policies,indexes,gates}/ directory layout, the per-entity file matrix (spec.yaml, contents.yaml, rule.rego, detail.py, display.py, input/, data/, test/), the policy `detail.variations[]` model with CEL/index criteria, index and gate YAML, `fianu console plan/deploy/test`, and the multipart upload to /entities/artifacts/deploy.
+description: Use when authoring or deploying Fianu entities as on-disk YAML packages with the `fianu console` CLI. Covers the envs/<env>/{controls,policies,exceptions,indexes,gates}/ directory layout, the per-entity file matrix (spec.yaml, contents.yaml, rule.rego, detail.py, display.py, input/, data/, test/), the required policy shape (`enabled`, `detail.policy[]` variation list with CEL/index criteria), exception YAML, index and gate YAML, `fianu console plan/deploy/test`, and the multipart upload to /entities/artifacts/deploy.
 ---
 
 # Deploying Entities (YAML / CLI)
@@ -36,8 +36,9 @@ load the parent `deploying-entities-as-code`.
 │   │   │   ├── data/*.json         (test policy fixtures)
 │   │   │   └── test/*.json         (test case definitions)
 │   │   ├── policies/
-│   │   │   ├── f.<policy-path>.yaml
-│   │   │   └── f.<control-path>.exception.<id>.yaml
+│   │   │   └── f.<policy-path>.yaml
+│   │   ├── exceptions/
+│   │   │   └── f.<exception-path>.yaml
 │   │   ├── indexes/
 │   │   │   └── f.indexes.<name>.yaml
 │   │   └── gates/
@@ -63,13 +64,15 @@ typically differ per environment — lenient in dev, strict in prod.
 |---|---|
 | `control` | `spec.yaml` + `contents.yaml` + `rule.rego` + (optional) `detail.py`, `display.py` + `input/*.json` + `data/*.json` + `test/*.json` |
 | `policy` | single YAML file, name format `f.<policy-path>.yaml`; `type: "policy"` |
-| `policy_exception` | single YAML file, name format `f.<control-path>.exception.<id>.yaml`; `type: "exception"` |
+| `policy_exception` | single YAML file under `exceptions/`, name format `f.<exception-path>.yaml`; `type: "exception"` |
 | `index` | single YAML file, `type: "index"`; a reusable CEL asset-scope referenced by policy/gate criteria |
 | `gate` | single YAML file, `type: "gate"`; bundles required controls/gates into a composite decision, with inline policy + pods |
 
-Exceptions use the same `variations` + `criteria` shape as policies, with
-`type: "exception"`, a narrowing criteria block, and **required**
-`expiration.timestamp` and `justification.message`.
+Exceptions use the same `enabled` + `detail.policy[]` + `criteria` shape as
+policies, with `type: "exception"` (both top-level and `detail.type`), a
+narrowing criteria block on every block, and **required**
+`expiration.timestamp` and `justification.message`. Real exception files live
+in `../entities-as-code/envs/<env>/exceptions/`.
 
 ## spec.yaml — top-level shape
 
@@ -103,69 +106,82 @@ For Rego rule authoring inside `rule.rego`, see `writing-rego-rules`.
 For `policy_template.measures` syntax, see `designing-policy-templates`.
 For domain/collection placement, see `placing-entities-in-hierarchy`.
 
-## policy YAML — top-level shape (variations model)
+## policy YAML — required shape
+
+Grounded in the real files in `../entities-as-code/envs/<env>/policies/`
+and the maintained template `templates/policies/_template.yaml` ("v2
+Simplified Format"). Required fields are marked.
 
 ```yaml
-name: "<Org> Standard: <Subject>"
-path: "<dot.notation.path>"
-type: "policy"
+enabled: true                      # REQUIRED — present in every real policy file
+name: "<Org> Standard: <Subject>"  # REQUIRED
+path: "<dot.notation.path>"        # REQUIRED — immutable
+type: "policy"                     # REQUIRED — "policy" | "exception"
 detail:
-  type: "standard"                 # standard | exception | target
+  type: "standard"                 # REQUIRED — standard | exception
   control:
-    path: "<control-path>"         # control this policy binds to
-  variations:                      # ordered list; LAST matching variation wins
-    - criteria:                    # omit criteria for an all-assets catch-all
-        asset: { type: repository }
-      policy:                      # threshold map — matches the control's policyTemplate.measures
-        required: true
+    path: "<control-path>"         # REQUIRED — the control this policy binds to
+  policy:                          # REQUIRED — ordered list of variation blocks
+    - policy:                      # first block, no criteria → catch-all default
+        required: true             # threshold map — matches control's policyTemplate.measures
         <threshold-section>:
           <metric>: <value>
     - criteria:                    # a narrower tier overrides the catch-all above
         asset: { type: repository }
-        expressions:
-          - expression: "asset.labels.tier == 'prod'"
-        combine_with: AND          # AND (default) or OR
-      effect: apply                # apply (default; run with these thresholds) | exempt (skip evaluation)
+        expression: "asset.scm.repository == 'payments-app'"   # singular CEL shorthand
       policy:
         required: true
         <threshold-section>:
           <metric>: <override-value>
   justification:
-    message: "<why this policy exists>"     # recommended
+    message: "<why this policy exists / why it changed>"   # REQUIRED
   expiration:
-    timestamp: "<RFC3339>"                  # recommended
+    timestamp: "<RFC3339>"         # optional for standard; REQUIRED for exception
 ```
 
-`detail.variations` is evaluated in array order and the **last matching
-variation wins** for a given asset — so author broadest-to-narrowest:
-catch-all first, most-specific last. Each variation's `policy` map MUST
-shape-match the parent control's `policyTemplate.measures` tree; a key
-mismatch silently fails at evaluation time. (The legacy single
-`detail.policy: [...]` list shape still parses for backward compatibility,
-but `variations` is the current model — author new policies with it.)
+**The YAML key is `detail.policy:`, not `detail.variations:`.** The server
+struct field is named `Variations` but carries the tag `yaml:"policy"`
+(`../core/external/db/types/fianu/entities/policy.go`), so each block in
+`detail.policy[]` *is* a "variation." There is no `variations:` key — a file
+written with `detail.variations:` deploys an empty policy that silently
+matches nothing. (The Terraform provider is the only surface that spells the
+attribute `variations` — see `deploying-entities-terraform`.)
+
+`detail.policy[]` is evaluated in array order and the **last matching
+variation wins** for a given asset — author broadest-to-narrowest: catch-all
+first, most-specific last. Each block's `policy` map MUST shape-match the
+parent control's `policyTemplate.measures` tree; a key mismatch silently
+fails at evaluation time.
 
 ### Variation criteria — three mutually exclusive forms
 
-1. **Inline CEL** — `asset` plus `expressions[].expression` (and optional
-   `combine_with: AND|OR`). Defines the scope on the spot.
-2. **Index reference** — `indexes: [{ path: "f.indexes.repos.prod" }]` (or
-   `{ id: "<uuid>" }`). Reuses a named scope; omit `asset` and
-   `expressions` — the linked index already carries both.
-3. **Unscoped** — `asset: { type: ... }` with no `expressions` and no
-   `indexes` → a catch-all for every asset of that type.
+A block with no `criteria` is the catch-all default. When present, `criteria`
+must be exactly one of (enforced by `PolicyAssetGroup.IsValid`):
 
-> Inline `expressions` auto-spawn a private index. On write the server
-> content-hashes `(asset_type, expressions, combine_with)` and either links
-> to an existing index with that hash (dedup) or materialises a new
-> `visibility=private` index. Writing inline `expressions` and referencing
-> `indexes:` explicitly differ only in whether you author the index up
-> front. Author scope at scale as named indexes (next section).
+1. **Inline CEL** — `asset: { type: ... }` plus either `expression: "<CEL>"`
+   (singular shorthand, what the real repo uses) or `expressions: [{ expression: "<CEL>" }]`
+   (plural list, with optional `combineWith: AND|OR`). `asset.type` is
+   **required** whenever `expression(s)` is set.
+2. **Index reference** — `indexes: [{ path: "core.applications" }]` (or
+   `{ id: "<uuid>" }`). Reuses a named scope; omit `expression(s)` — the
+   linked index already carries the CEL and asset type. Setting both
+   `expressions` and `indexes` is rejected.
+3. **Unscoped** — `asset: { type: ... }` alone → a catch-all for every asset
+   of that type (links the default per-asset-type index).
 
-`effect: exempt` skips evaluation entirely for matching assets (vs `apply`,
-which runs the control). `locked: true` prevents downstream tenants from
-overriding a variation. For the AND/OR resolution semantics when variations
-collide on one asset, see `using-fianu-best-practices` → FIANU.md
-§Policy Variations.
+> The singular `expression:` is lifted into the plural `expressions[]` by the
+> server's `Prepare()` step. Inline `expression(s)` auto-spawn a private
+> index: on write the server content-hashes `(asset_type, expressions)` and
+> either links an existing index with that hash (dedup) or materialises a new
+> `visibility=private` index. Referencing `indexes:` explicitly differs only
+> in whether you author the index up front. Author scope at scale as named
+> indexes (next section).
+
+Optional per-block fields: `effect: exempt` skips evaluation entirely for
+matching assets (vs the default `apply`, which runs the control); `locked: true`
+prevents downstream tenants from overriding a block; `name:` labels the block.
+For AND/OR resolution semantics when blocks collide on one asset, see
+`using-fianu-best-practices` → FIANU.md §Policy Variations.
 
 ## index YAML — top-level shape
 
@@ -183,9 +199,11 @@ detail:
 ```
 
 An index names a reusable asset scope so policies and gates can reference
-it by `path` or `id` instead of repeating CEL. **Mind the casing:** index
-expressions use `expressions[].source` and `combineWith`; policy/gate
-*criteria* use `expressions[].expression` and `combine_with`.
+it by `path` or `id` instead of repeating CEL. **Mind the field names:** index
+expressions use `expressions[].source`; policy/gate *criteria* use the singular
+`expression:` shorthand or `expressions[].expression`. Both surfaces spell the
+combine field `combineWith` (camelCase, per the server struct tag), not
+`combine_with`.
 
 - `detail.kind` is **server-controlled** — the public deploy endpoint forces
   every user-authored index to `kind: write`. Leave it unset. `default`
@@ -227,6 +245,15 @@ references the gate, so a gate with no policy enforces nothing.
 the same CEL/index criteria shape (most-restrictive wins: `enforce` >
 `check`).
 
+> ⚠️ Unlike policies/exceptions/controls, **no checked-in repo ships a YAML
+> gate package** — the only live gate example is the Terraform one in
+> `../fianu-cloud/.../controls/` (see `deploying-entities-terraform` §fianu_gate),
+> which is the verified reference for the field set. The gate's inline-policy
+> structs use camelCase JSON tags (`protectionLevel`, `requiredControls`) and
+> some fields have no explicit YAML tag, so confirm key casing against
+> `../core/external/db/types/fianu/entities/environments.go` before hand-authoring
+> a YAML gate.
+
 ## CLI commands
 
 ```bash
@@ -252,9 +279,13 @@ The `--controls` / `--policies` / `--gates` flags are optional hints for
 the legacy format where the root `type` is ambiguous; with `type` set on
 every file you don't need them.
 
-`--project` and `--repository` are required on `plan` / `deploy`. They
-correlate with the project / repository scope the server uses to organize
-deployed entities and to attribute the approval-ticket history.
+`--project` and `--repository` are **optional**: they tag deployed entities
+with a project / repository scope for organizing them and attributing the
+approval-ticket history. The `../entities-as-code` repo passes both
+(`fianu console deploy ./envs/dev --project fianulabs --repository entities-as-code`);
+the `../official-controls` CI omits them entirely
+(`fianu console deploy ./_deploy --controls`). Pass them when you want the
+attribution; leave them off otherwise.
 
 ## Wire contract
 
@@ -319,24 +350,29 @@ When updating this skill, refresh from:
 
 | Source of truth | What it controls |
 |---|---|
-| `../core/documentation/fianu/console/entities_as_code.md` | **Authoritative** customer-facing spec for the policy `variations` model, the index YAML, and the gate YAML. The docs lead the repo templates. |
-| `../core/entities-as-code/templates/controls/_template/spec.yaml` | Control `spec.yaml` shape and field documentation. |
-| `../core/entities-as-code/templates/controls/_template/contents.yaml` | The contents manifest. |
-| `../core/entities-as-code/templates/policies/_template.yaml` | Policy YAML — see the warning below. |
-| `../core/entities-as-code/templates/exceptions/_template.yaml` | Exception YAML — see the warning below. |
-| `../core/entities-as-code/docs/cheat-sheet.md` | Quick reference for common patterns (producer paths, asset/series types, policyTemplate value types). |
-| `../core/entities-as-code/docs/getting-started/concepts.md` | The five control results (`pass` / `fail` / `warn` / `notFound` / `notRequired`) and the scanner → occurrence → control data flow. |
+| `../entities-as-code/envs/<env>/policies/*.yaml` | **Real deployed policy files** — the authoritative example of the working on-disk shape (`enabled`, `detail.policy[]`, singular `criteria.expression`). |
+| `../entities-as-code/envs/<env>/exceptions/*.yaml` | **Real deployed exception files** — `type: exception`, required `expiration.timestamp`. |
+| `../official-controls/envs/<env>/controls/<category>/<key>/` | **Real deployed control packages** — `spec.yaml` + `contents.yaml` + `rule.rego` + `rule_test.rego` + `detail.py` / `display.py` + `input/` + `data/`. |
+| `../entities-as-code/templates/policies/_template.yaml` | Policy YAML template ("v2 Simplified Format") — current and matches the deployed files. |
+| `../entities-as-code/templates/exceptions/_template.yaml` | Exception YAML template — current. |
+| `../entities-as-code/templates/controls/_template/{spec,contents}.yaml` | Control `spec.yaml` shape + the contents manifest. |
+| `../entities-as-code/docs/cheat-sheet.md` | Quick reference (producer paths, asset/series types, policyTemplate value types). |
+| `../entities-as-code/docs/getting-started/concepts.md` | The control results (`pass` / `fail` / `warn` / `notFound` / `notRequired`) and the scanner → occurrence → control data flow. |
+| `../documentation/fianu/console/entities_as_code.md` | Customer-facing prose spec. **Caveat:** it writes the policy key as `detail.variations:`, which does not match the server tag `yaml:"policy"` — prefer the repo files above for the on-disk key. |
 
-> ⚠️ As of this writing the `templates/policies/_template.yaml` and
-> `templates/exceptions/_template.yaml` files still show the **legacy**
-> `detail.policy: [...]` list shape (pre-variations, `criteria.expression`
-> singular). The server still parses that shape for backward compatibility,
-> but the `variations` model documented above is current. Follow the docs,
-> not the lagging templates, when authoring new policies.
+> ⚠️ The on-disk YAML key is `detail.policy:` (a list), with `criteria.expression`
+> singular as a supported shorthand — this is what `templates/policies/_template.yaml`,
+> `templates/exceptions/_template.yaml`, and every file under `envs/<env>/`
+> actually use, and it matches the server struct tag `yaml:"policy"`. The
+> customer doc `entities_as_code.md` writes the key as `detail.variations:`,
+> which does **not** match the server tag — authoring that key deploys an empty
+> policy. **Follow the repo templates and the server struct, not the doc's key
+> name.** ("variations" is the correct name for the *Terraform* attribute and
+> for the Go field; only the on-disk YAML/JSON key is `policy`.)
 
 The server-side grounding for the entity shapes:
 
-| Server source (in `../core/core/`) | What it grounds |
+| Server source (in `../core/`, the Go backend) | What it grounds |
 |---|---|
 | `external/db/types/fianu/entities/policy.go` | The policy `detail.Variations` model (effect default `apply`, criteria, locked); serializes variations under the `policy` JSON key. |
 | `external/db/types/fianu/entities/indexes.go` | Index detail + the criteria converter that content-hashes scope and dedups inline expressions onto a private index. |
@@ -348,7 +384,7 @@ and there is no compile-time check against this SKILL.md.
 
 The wire contract itself (multipart-POST to `/entities/artifacts/deploy`)
 is shared with the Terraform path and lives in
-`../core/core/pkg/entities_files/handler.go`. Refresh only if the deploy
+`../core/pkg/entities_files/handler.go`. Refresh only if the deploy
 endpoint or request shape changes.
 
 ## See also

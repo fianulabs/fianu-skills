@@ -16,7 +16,7 @@ Load this skill when an agent is authoring or applying entities via
 Terraform. For the on-disk YAML path, load `deploying-entities-yaml`. For
 shared deploy semantics, load `deploying-entities-as-code`.
 
-## Resources (v0.1)
+## Resources (provider `~> 0.2`)
 
 | Resource | Status | Notes |
 |---|---|---|
@@ -33,34 +33,47 @@ rego rules against on-disk fixtures (see "Testing" below).
 
 ## Provider configuration
 
+This mirrors the real working stack in
+`../fianu-cloud/environments/fianu-dev/controls/` (`versions.tf` +
+`providers.tf`):
+
 ```hcl
+# versions.tf
 terraform {
+  backend "s3" {                       # real stacks pin a remote state backend
+    bucket       = "fianu-terraform-state"
+    key          = "fianu-dev/controls/terraform.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true
+  }
+
+  required_version = ">= 1.12.0"       # 1.12 is the provider floor; action {} needs 1.14+
+
   required_providers {
     fianu = {
       source  = "fianulabs/fianu"
-      version = "~> 0.1"
+      version = "~> 0.2.0"             # current published surface
     }
   }
 }
 
-provider "fianu" {
-  host          = "https://console.fianu.io"
-  client_id     = var.fianu_client_id
-  client_secret = var.fianu_client_secret
-}
+# providers.tf — the real stack leaves the block empty and auths via env vars
+provider "fianu" {}
 ```
 
 ### Authentication
 
-| Method | When to use | Variables |
-|---|---|---|
-| OIDC client-credentials (preferred) | All non-CI use, and CI clients that can hold a long-lived secret | `client_id`, `client_secret`, optional `token_url`, optional `audience` |
-| Static bearer | CI service accounts that already hold a long-lived token | `token` |
+The real stack supplies credentials through environment variables rather than
+inline attributes. Attributes still work if you prefer them:
 
-Env-var fallbacks: `FIANU_HOST`, `FIANU_CLIENT_ID`, `FIANU_CLIENT_SECRET`,
-`FIANU_TOKEN_URL`, `FIANU_AUDIENCE`, `FIANU_TOKEN`. `audience` defaults to
-`https://fianu.us.auth0.com/api/v2`; override only for private
-deployments. `token_url` defaults to
+| Method | When to use | Variables (env / attribute) |
+|---|---|---|
+| OIDC client-credentials (preferred) | All non-CI use, and CI clients that can hold a long-lived secret | `FIANU_CLIENT_ID` / `client_id`, `FIANU_CLIENT_SECRET` / `client_secret`, optional `FIANU_TOKEN_URL` / `token_url`, optional `FIANU_AUDIENCE` / `audience` |
+| Static bearer | CI service accounts that already hold a long-lived token | `FIANU_TOKEN` / `token` |
+
+`FIANU_HOST` (e.g. `https://console.dev.fianu.io`) is always required.
+`audience` defaults to `https://fianu.us.auth0.com/api/v2`; override only for
+private deployments. `token_url` defaults to
 `https://cloudauth.fianu.io/oauth/token`.
 
 ## Resource shape (common across types)
@@ -100,9 +113,58 @@ resource "fianu_control" "sast" {
 }
 ```
 
-That's a deployable control with no evaluation logic. To add real
-behavior, populate `detail.evaluation`, `detail.policy_template`,
-`detail.relations`, `detail.assets`, `detail.results`, and `detail.config`.
+`path`, `name`, and `detail` are the only required top-level attributes;
+inside `detail`, only `evaluation` is required for a control that actually
+evaluates. The minimal block above is deployable but evaluates nothing.
+
+### detail fields expected in a real control
+
+The working example in `../fianu-cloud/environments/fianu-dev/controls/`
+(`terraform.example.iac.scan`) fills these out — copy this shape when
+generating a new control:
+
+```hcl
+detail = {
+  full_name   = "Terraform IaC Scan"
+  display_key = "TFEX"               # 2–4 char code
+  description = "…"
+
+  documentation = [                  # optional; {title, url} link list
+    { title = "tfsec", url = "https://aquasecurity.github.io/tfsec/" },
+  ]
+
+  results = {                        # which verdicts this control may emit
+    fail         = true
+    warn         = true
+    not_required = true
+  }
+
+  relations = [{                     # data subscription(s) that feed the rule
+    domain     = "compliance.controls"
+    collection = "security"
+    path       = "f.demo.source.terraform.iac"
+    note       = "occurrence"
+    is_primary = true
+    producer   = { type = "plugin", path = "generic" }
+  }]
+
+  assets = [{                        # abstract asset types + series this applies to
+    type   = "repository"            # repository | module | artifact | release
+    series = [{ name = "commit" }, { name = "tag" }]
+  }]
+
+  policy_template = { measures = [ … ] }   # threshold schema; see designing-policy-templates
+
+  evaluation = local.terraform_example_evaluation   # REQUIRED for real behavior
+
+  config = {                         # operational options
+    scope               = "always"
+    retries             = true
+    evidence_submission = false
+    manual_attestations = false
+  }
+}
+```
 
 ## file() pattern for rego/python content
 
@@ -224,62 +286,93 @@ evaluation time. (Same constraint as the YAML path.)
 
 ## fianu_gate — example
 
+Required inside `detail`: `environments` (≥1), `policy`, and `pods` (≥1).
+This mirrors the real `terraform.example.iac.scan` gate:
+
 ```hcl
-resource "fianu_gate" "security" {
-  path = "f.gate.security"
-  name = "Security Gate"
+resource "fianu_gate" "terraform_iac_scan" {
+  path = "f.gate.security.terraform.iac.scan"
+  name = "Terraform IaC Scan Gate"
 
   detail = {
-    full_name   = "Production Security Gate"
-    display_key = "PSEC"
-    description = "Gates production deployments on critical security findings."
+    full_name   = "Terraform IaC Scan Gate"
+    display_key = "TFGS"
+    description = "…"
 
-    environments = [{ path = "env.prod" }]
+    environments = [{ path = "env.prod" }]   # REQUIRED — ≥1 live environment
 
-    policy = {
-      variations = [
-        { required_controls = ["f.demo.testing.accessibility.result"] },
+    policy = {                               # REQUIRED — gate enforces nothing without it
+      variations = [                         # priority-ordered; each names required controls/gates
+        {                                    # tier 1 — explicit index
+          criteria          = { indexes = [{ path = fianu_index.terraform_prod_repos.path }] }
+          required_controls = ["terraform.example.iac.scan"]
+        },
+        {                                    # tier 2 — inline criteria (auto-creates an index)
+          criteria          = {
+            asset       = { type = "repository" }
+            expressions = [{ expression = "asset.uuid == '…0002'" }]
+          }
+          required_controls = ["terraform.example.iac.scan"]
+        },
+        { required_controls = ["terraform.example.iac.scan"] },   # tier 3 — catch-all
       ]
-      override = {
-        asset = { types = ["repository"] }
-      }
+      override = { asset = { types = ["repository"] } }   # binds gate variations to asset type(s)
     }
 
-    pods = [
-      { key = "default", protection_level = "enforce" },
-    ]
+    pods = [{                                # REQUIRED — ≥1 pipeline-automation rule
+      key              = "default"
+      name             = "Default enforcement"
+      protection_level = "enforce"           # enforce (block) | check (report only)
+      enabled          = true
+      matching = [                           # optional per-scope protection_level overrides
+        {
+          protection_level = "check"
+          asset            = { type = "repository" }
+          expressions      = [{ expression = "asset.uuid == '…0002'" }]
+        },
+        {
+          protection_level = "enforce"
+          indexes          = [{ path = fianu_index.terraform_prod_repos.path }]
+        },
+      ]
+    }]
   }
 }
 ```
 
-The server auto-fills the gate's evaluation logic, policy template, and
-asset bindings via `applyGateDefaults`; HCL only exposes identity,
-operational `config`, `environments`, `pods`, and an optional inline
-`policy` (which deploys as a separate `fianu_policy` keyed to the gate).
-For the gate to actually enforce anything, a policy must exist on it —
-either inline (as above) or as a separate `fianu_policy` resource.
+Each gate variation must carry at least one of `required_controls` or
+`required_gates`. Because gates bind via `policy.override.asset.types`, gate
+variations may omit per-variation `asset` (unlike policy variations, which
+require `asset.type`). The server auto-fills the gate's evaluation logic and
+policy template via `applyGateDefaults`; HCL exposes identity, `config`,
+`environments`, `pods`, and the inline `policy` (which deploys as a separate
+`fianu_policy` keyed to the gate). For the gate to enforce anything, a policy
+must exist on it — inline (as above) or as a separate `fianu_policy`.
 
 ## fianu_index — example
 
 ```hcl
-resource "fianu_index" "prod_repos" {
-  path = "f.indexes.repos.prod"
-  name = "Production Repositories"
+resource "fianu_index" "terraform_prod_repos" {
+  path = "f.indexes.terraform.prod_repos.v3"
+  name = "Terraform IaC — Production Repos"
 
   detail = {
-    description = "All repositories tagged tier=prod, owned by an engineering team."
-    asset_type  = "repository"
-    expressions = [
-      { source = "asset.labels exists tier && asset.labels.tier == 'prod'" },
-      { source = "asset.properties.owner startsWith 'team-'" },
+    description = "Production repositories under the Terraform IaC scan policy."
+    asset_type  = "repository"          # REQUIRED — immutable (rename forces replacement)
+    kind        = "write-ahead"         # optional; the real example sets this
+    expressions = [                     # REQUIRED — note the key is `source`, not `expression`
+      { source = "asset.uuid == '…0001'" },
     ]
   }
 }
 ```
 
-Indexes are referenced from policy / gate variations by `path` or `id`.
-`asset_type` is immutable (changing it forces replacement, surfaced in the
-plan).
+Required in `detail`: `asset_type` and `expressions` (each entry keyed by
+`source`). Indexes are referenced from policy / gate variations by `path` or
+`id`. The real Terraform example sets `kind = "write-ahead"`; note that the
+YAML/CLI public deploy endpoint instead forces user-authored indexes to
+`kind: write` (see `deploying-entities-yaml`) — if you mix surfaces, expect a
+`kind` diff on import.
 
 ## Wire contract
 
@@ -354,8 +447,15 @@ When updating this skill, refresh from:
 | `docs/resources/index.md` | Full `fianu_index` schema, asset-type taxonomy, CEL expression rules. |
 | `docs/actions/control_test.md` | `fianu_control_test` action schema. |
 | `internal/resources/<type>/` | Authoritative resource implementations — read when a schema field's runtime semantics aren't clear from the docs. |
-| `examples/resources/fianu_control/` | Working example controls (sast_checkmarx, unit_tests_pytest, container_scan_wiz) — copy-paste starting points. |
+| `examples/resources/fianu_control/` | Provider-repo example controls — copy-paste starting points. |
 | `CHANGELOG.md` | Version-to-version surface changes (new resources, attribute renames, behaviour fixes). |
+
+The closest thing to a customer-grade, end-to-end working stack lives **outside**
+the provider repo, in `fianu-cloud`:
+
+| Real-world stack | What it grounds |
+|---|---|
+| `../fianu-cloud/environments/fianu-dev/controls/` | A live stack that pulls `fianulabs/fianu ~> 0.2.0` from the public registry and deploys a `fianu_control` + `fianu_policy` + `fianu_gate` + `fianu_index` for `terraform.example.iac.scan`. `versions.tf` / `providers.tf` show the real backend + env-var auth; `main.tf` shows the `locals` + `file()` + `action_trigger` wiring; `README.md` documents prerequisites and the apply flow. This is the canonical "what should the Terraform look like" reference. |
 
 The `docs/resources/*.md` files are auto-generated from the provider
 schema by `tfplugindocs` — they are the closest thing to a machine-readable
@@ -366,7 +466,7 @@ format does.
 The wire contract (base64 → `X-Fianu-Raw-Content` → POST
 `/entities/artifacts/deploy`) lives in
 `../terraform-provider-fianu/internal/resources/base/` and the server
-counterpart in `../core/core/pkg/entities_files/handler.go`. Refresh only
+counterpart in `../core/pkg/entities_files/handler.go`. Refresh only
 if the deploy endpoint or request shape changes.
 
 ## See also
