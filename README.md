@@ -46,4 +46,4 @@ See `CLAUDE.md` (Claude Code) or `AGENTS.md` (other harnesses) and `docs/authori
 
 ## License
 
-Apache-2.0. See `LICENSE`.
+Apache-2.0. See `LICENSE`. 
