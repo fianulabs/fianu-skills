@@ -473,6 +473,8 @@ if the deploy endpoint or request shape changes.
 
 - `deploying-entities-as-code` — picking a format, idempotency, approval flow.
 - `deploying-entities-yaml` — same entities, on-disk YAML surface.
+- `working-with-indexes` — the runtime API for the `fianu_index` entity.
+- `writing-cel-expressions` — the CEL dialect used in index / policy / gate criteria.
 - `writing-rego-rules` — `rule.rego` authoring.
 - `designing-policy-templates` — `policy_template.measures` syntax.
 - `placing-entities-in-hierarchy` — domain/collection selection for relations.

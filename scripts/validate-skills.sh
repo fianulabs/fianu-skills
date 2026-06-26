@@ -25,6 +25,10 @@ CANARIES="$(printf '%s\t%s\n' \
     'bot|fianu-agent'           'working-with-tickets' \
     'GET /pods/entities'        'working-with-llm-context-rules' \
     'import rego.v1'            'writing-rego-rules' \
+    '/internal/upload'          'working-with-attestations' \
+    '/assets/releases/'         'working-with-release-gating' \
+    'recomputeStatus'           'working-with-indexes' \
+    '.(list_string)'            'writing-cel-expressions' \
 )"
 
 # --- Check 1+2+3: frontmatter ---
