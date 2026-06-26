@@ -1,6 +1,6 @@
 # Architecture
 
-`fianu-skills` ships 20 skills in 5 groups. Orchestrator skills (Group D) are the entry points an agent typically loads first; they declare their dependencies via `## Loads:` and the agent loads each one in turn.
+`fianu-skills` ships 24 skills in 5 groups. Orchestrator skills (Group D) are the entry points an agent typically loads first; they declare their dependencies via `## Loads:` and the agent loads each one in turn.
 
 ## Skill groups
 
@@ -11,16 +11,19 @@
 | `using-fianu-skills` | Bootstrap. Routes the agent to the right downstream skill based on user intent. Auto-loaded by the Claude Code SessionStart hook and Gemini CLI's `@`-import. |
 | `using-fianu-best-practices` | Topical navigator over `references/FIANU.md` (the 905-line domain reference). Loaded whenever an agent needs to make a decision aligned with Fianu's domain model. |
 
-### Group B — Platform API (4)
+### Group B — Platform API (7)
 
 | Skill | Purpose |
 |---|---|
 | `working-with-tickets` | Canonical home for the Ticket/Condition/Activity data model, ticket endpoints, the bot identity convention, and the nested-approvers lookup gotcha. |
 | `working-with-entities` | Read/write controls, policies, exceptions, gates. Draft + approval-ticket flow. |
+| `working-with-attestations` | Read attestation results / history / computed-policy meta, submit manual attestations, the pass/fail/notRequired/notFound vocabulary. |
+| `working-with-release-gating` | Runtime gate evaluation against assets/releases + the release lifecycle (gate *config* reads stay in `working-with-entities`). |
+| `working-with-indexes` | The `/entities/indexes` HTTP surface + compute lifecycle for materialized CEL asset scopes. |
 | `working-with-llm-context-rules` | LLM context rule pods. Parent-walk pattern. The 0.70 confidence cap when no pod exists. |
 | `working-with-evidence-plugins` | Plugin catalog + schema discovery. |
 
-### Group C — Logic primitives (7)
+### Group C — Logic primitives (8)
 
 | Skill | Purpose |
 |---|---|
@@ -31,12 +34,13 @@
 | `placing-entities-in-hierarchy` | Domain + collection selection by framework keywords. |
 | `matching-existing-controls` | Similarity scoring + thresholds for reuse vs. new-control. |
 | `parsing-framework-documents` | Framework document → normalized requirements + classification. |
+| `writing-cel-expressions` | The Fianu CEL dialect for policy criteria + index scopes: the `$asset.field.(cast)` grammar and operator vocabulary. |
 
 ### Group D — Orchestrators (4)
 
 | Skill | Loads |
 |---|---|
-| `analyzing-tickets` | `working-with-tickets`, `working-with-entities`, `diffing-policies`, `using-fianu-best-practices` |
+| `analyzing-tickets` | `working-with-tickets`, `working-with-entities`, `working-with-attestations`, `diffing-policies`, `using-fianu-best-practices` |
 | `managing-ticket-approvals` | All of the above + `working-with-llm-context-rules` + `computing-decision-confidence` |
 | `converting-frameworks-to-controls` | `parsing-framework-documents`, `matching-existing-controls`, `working-with-evidence-plugins`, `writing-rego-rules`, `designing-policy-templates`, `placing-entities-in-hierarchy`, `working-with-entities`, `using-fianu-best-practices` |
 | `summarizing-evidence` | (none — atomic one-shot skill) |

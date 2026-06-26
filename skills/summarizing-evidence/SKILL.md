@@ -73,3 +73,10 @@ The user message identifies the subject (`attestation`, `finding`, `violation`, 
 - Restating the field name before its value ("The severity is: high"). Just say "high severity".
 - Empty-string fields, null fields, or zero counts.
 - Provenance, integration chain, or audit metadata — unless it materially changes the meaning.
+
+## See also
+
+This skill is atomic — it loads nothing. The endpoint that fetches and
+regenerates this finding summary lives in `working-with-attestations`
+(`/agent/notes/attestations/:uuid/findings/:id/summarize`); load that skill
+when you need the call, not the output contract.

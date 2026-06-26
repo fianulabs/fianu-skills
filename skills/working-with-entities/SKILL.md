@@ -118,3 +118,10 @@ cannot reconcile the conflict.
 If an entity is in `draft` state, downstream operations that require the
 `published` version will fail. Either wait for the approval ticket or
 operate against the most recent published version.
+
+## See also
+
+- `working-with-attestations` — the attestations a control produces when it evaluates.
+- `working-with-release-gating` — the **runtime** gate evaluation and release lifecycle (this skill owns only the gate *config* read, `GET /gates/:key`).
+- `working-with-indexes` — the index entity that gates and policy criteria reference.
+- `using-fianu-best-practices` → FIANU.md §Controls / §Policies & Exceptions / §Gates — design rules.
