@@ -13,13 +13,14 @@ fi
 NEW="$1"
 REPO_ROOT="$(cd -- "$(dirname -- "$0")/.." && pwd)"
 
-# All five manifest files that must be updated in lockstep:
+# All six manifest files that must be updated in lockstep:
 FILES="
 package.json
 .claude-plugin/plugin.json
 .claude-plugin/marketplace.json
 .codex-plugin/plugin.json
 gemini-extension.json
+plugin.json
 "
 
 cd "$REPO_ROOT"

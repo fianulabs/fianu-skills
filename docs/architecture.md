@@ -8,7 +8,7 @@
 
 | Skill | Purpose |
 |---|---|
-| `using-fianu-skills` | Bootstrap. Routes the agent to the right downstream skill based on user intent. Auto-loaded by the Claude Code SessionStart hook and Gemini CLI's `@`-import. |
+| `using-fianu-skills` | Bootstrap. Routes the agent to the right downstream skill based on user intent. Auto-loaded by the Claude Code SessionStart hook and Gemini CLI's `@`-import; Codex and Copilot CLIs discover it by frontmatter `description`. |
 | `using-fianu-best-practices` | Topical navigator over `references/FIANU.md` (the 905-line domain reference). Loaded whenever an agent needs to make a decision aligned with Fianu's domain model. |
 
 ### Group B — Platform API (7)
@@ -88,4 +88,4 @@ The canary check is scoped to SKILL.md *bodies* only — descriptions in frontma
 5. The orchestrator's `## Loads` section names its dependencies; the agent loads each in turn before executing the workflow.
 6. The orchestrator runs its workflow, posting activities or rendering JSON as the workflow demands.
 
-The same flow works across all three harnesses because the `skills/` tree is identical — only the per-harness manifests differ.
+The same flow works across all four harnesses (Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI) because the `skills/` tree is identical — only the per-harness manifests differ.

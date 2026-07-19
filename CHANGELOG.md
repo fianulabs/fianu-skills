@@ -6,6 +6,9 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- GitHub Copilot CLI support: root `plugin.json` manifest (`skills: ./skills/`) and `using-fianu-skills/references/copilot-tools.md` tool-name mapping. Install with `copilot plugin install fianulabs/fianu-skills`.
+
 ## [v0.2.2] - 2026-06-26
 
 ### Added
