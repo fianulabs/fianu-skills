@@ -72,6 +72,7 @@ See `references/patterns.md` for the full code of each pattern.
 ## See also
 
 - `references/patterns.md` — full code for each canonical pattern.
+- `writing-cel-expressions` — the asset-scoping counterpart (CEL) to this evaluation-logic skill (Rego).
 - `designing-policy-templates` — the policy template that backs `data.*`.
 - `working-with-evidence-plugins` — schema discovery for `input.detail.*`.
 - `using-fianu-best-practices` → FIANU.md §Controls > Designing a Control

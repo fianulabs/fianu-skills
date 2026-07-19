@@ -1,6 +1,6 @@
 ---
 name: analyzing-tickets
-description: "Use when posting a factual analysis comment on a Fianu approval ticket. Fact-only: no decisions, no confidence scores, no LLM context rules, no opinions. Loads: working-with-tickets, working-with-entities, diffing-policies, using-fianu-best-practices."
+description: "Use when posting a factual analysis comment on a Fianu approval ticket. Fact-only: no decisions, no confidence scores, no LLM context rules, no opinions. Loads: working-with-tickets, working-with-entities, working-with-attestations, diffing-policies, using-fianu-best-practices."
 ---
 
 # Analyzing Tickets
@@ -9,6 +9,7 @@ description: "Use when posting a factual analysis comment on a Fianu approval ti
 
 - `working-with-tickets`
 - `working-with-entities`
+- `working-with-attestations`
 - `diffing-policies`
 - `using-fianu-best-practices`
 
@@ -76,6 +77,7 @@ The diff feeds the **Changes** table in the output.
 
 ### 5. Fetch attestation history
 
+Via `working-with-attestations` (`GET /controls/:entity_key/attestations`).
 Last 10 attestations for the target entity. Present as counts only
 ("7 passing, 3 failing"), most recent date and result, and the trend.
 

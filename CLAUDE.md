@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repo layout
 
-- `skills/` — the canonical skill library (17 skills, 4 groups). See `docs/architecture.md` for the full inventory.
+- `skills/` — the canonical skill library (24 skills, 5 groups). See `docs/architecture.md` for the full inventory.
 - `.claude-plugin/` / `.codex-plugin/` / `gemini-extension.json` / `plugin.json` (root, Copilot) — per-harness plugin manifests.
 - `hooks/` — Claude Code SessionStart hook that bootstraps `using-fianu-skills`.
 - `scripts/` — `bump-version.sh` (lockstep version updates) and `validate-skills.sh` (frontmatter + canary-string lint).

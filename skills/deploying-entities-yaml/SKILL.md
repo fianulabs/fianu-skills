@@ -392,6 +392,8 @@ endpoint or request shape changes.
 - `deploying-entities-as-code` — picking a format, idempotency, approval flow.
 - `deploying-entities-terraform` — same entities, HCL surface.
 - `writing-rego-rules` — `rule.rego` authoring.
+- `writing-cel-expressions` — the CEL dialect for `criteria.expression` and index `source`.
+- `working-with-indexes` — the runtime API for the index entity referenced by criteria.
 - `designing-policy-templates` — `policyTemplate.measures` syntax.
 - `placing-entities-in-hierarchy` — domain/collection selection.
 - `working-with-evidence-plugins` — picking a plugin for `relations.producer`.

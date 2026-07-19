@@ -41,11 +41,15 @@ Key gotchas (load the canonical skill before acting on any of these):
 | Authoring Fianu entities in Terraform HCL | `deploying-entities-terraform` |
 | Reading/writing tickets without a full workflow | `working-with-tickets` |
 | Reading/writing controls/policies/gates/exceptions | `working-with-entities` |
+| Reading attestation results / history / submitting a manual attestation | `working-with-attestations` |
+| Evaluating gates / release status / why a release is blocked | `working-with-release-gating` |
+| Reading/writing indexes (reusable asset scopes) | `working-with-indexes` |
 | Reading LLM-context-rule pods | `working-with-llm-context-rules` |
 | Picking a plugin / discovering evidence schemas | `working-with-evidence-plugins` |
 | Comparing two policy versions | `diffing-policies` |
 | Producing a confidence score for an autonomous action | `computing-decision-confidence` |
 | Writing an OPA Rego rule | `writing-rego-rules` |
+| Writing a CEL scope expression (policy criteria / index) | `writing-cel-expressions` |
 | Designing a YAML policy template | `designing-policy-templates` |
 | Deciding domain/collection placement | `placing-entities-in-hierarchy` |
 | Checking if an existing control covers a requirement | `matching-existing-controls` |

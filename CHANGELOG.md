@@ -9,6 +9,18 @@ to [Semantic Versioning](https://semver.org/).
 ### Added
 - GitHub Copilot CLI support: root `plugin.json` manifest (`skills: ./skills/`) and `using-fianu-skills/references/copilot-tools.md` tool-name mapping. Install with `copilot plugin install fianulabs/fianu-skills`.
 
+## [v0.2.2] - 2026-06-26
+
+### Added
+- `working-with-attestations` (Group B) — attestation reads, computed-policy meta, manual attestation upload, and the pass/fail/notRequired/notFound result vocabulary.
+- `working-with-release-gating` (Group B) — runtime gate evaluation against assets/releases and the release lifecycle.
+- `working-with-indexes` (Group B) — the `/entities/indexes` HTTP surface and the index compute lifecycle.
+- `writing-cel-expressions` (Group C) — the Fianu CEL dialect (`$asset.field.(cast)`) for policy criteria and index scopes.
+
+### Changed
+- Wired the existing orchestrators and authoring skills to the new canonical homes (`analyzing-tickets`, `managing-ticket-approvals`, `summarizing-evidence`, `parsing-framework-documents`, `working-with-entities`, `deploying-entities-yaml`, `deploying-entities-terraform`, `writing-rego-rules`, `using-fianu-skills`).
+- Registered four canary strings in `validate-skills.sh` (`/internal/upload`, `/assets/releases/`, `recomputeStatus`, `.(list_string)`).
+
 ## [v0.2,1] - 2026-06-15
 
 ## [0.2.0] - 2026-06-13

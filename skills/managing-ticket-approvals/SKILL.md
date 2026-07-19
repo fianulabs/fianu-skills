@@ -9,6 +9,7 @@ description: Use when autonomously approving or denying a Fianu approval ticket.
 
 - `working-with-tickets`
 - `working-with-entities`
+- `working-with-attestations`
 - `working-with-llm-context-rules`
 - `diffing-policies`
 - `computing-decision-confidence`
@@ -61,7 +62,7 @@ Synthesize the inputs into a structured analysis:
 - **Confidence**: 0.0 – 1.0
 - **Justification**: 2–5 sentences
 - **Rules applied**: which LLM context rules influenced the decision and how
-- **Impact summary**: affected scope, risk direction, control criticality
+- **Impact summary**: affected scope, risk direction, control criticality, recent attestation trend (via `working-with-attestations`)
 
 Decision logic:
 

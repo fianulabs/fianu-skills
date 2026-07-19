@@ -71,7 +71,7 @@ For each requirement, classify by automation feasibility:
 | Category | Description | Downstream action |
 |---|---|---|
 | `automated-evidence` | Can be fully evaluated by a plugin + Rego rule. | Design a control. |
-| `manual-attestation` | Requires human-provided evidence. | Design a control with an `api` event source. |
+| `manual-attestation` | Requires human-provided evidence. | Design a control with an `api` event source; submit evidence via `working-with-attestations`. |
 | `hybrid` | Automated check + manual sign-off. | Design control + note the manual component. |
 | `informational` | Documentation-only; no evaluation. | Note in report; do not design a control. |
 
@@ -127,3 +127,4 @@ If multiple framework requirements describe the same control (e.g.
 
 - `matching-existing-controls` — next step after parsing.
 - `converting-frameworks-to-controls` — orchestrates the full ingestion.
+- `working-with-attestations` — submitting evidence for `manual-attestation` requirements.
