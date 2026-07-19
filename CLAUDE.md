@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-`fianu-skills` is a multi-harness skill plugin distributed to customers building AI agents on the Fianu compliance platform. It ships skills for Claude Code, Codex CLI, and Gemini CLI. There is no application code — everything here is markdown skill files, JSON manifests, and shell scripts.
+`fianu-skills` is a multi-harness skill plugin distributed to customers building AI agents on the Fianu compliance platform. It ships skills for Claude Code, Codex CLI, Gemini CLI, and GitHub Copilot CLI. There is no application code — everything here is markdown skill files, JSON manifests, and shell scripts.
 
 ## Repo layout
 
 - `skills/` — the canonical skill library (17 skills, 4 groups). See `docs/architecture.md` for the full inventory.
-- `.claude-plugin/` / `.codex-plugin/` / `gemini-extension.json` — per-harness plugin manifests.
+- `.claude-plugin/` / `.codex-plugin/` / `gemini-extension.json` / `plugin.json` (root, Copilot) — per-harness plugin manifests.
 - `hooks/` — Claude Code SessionStart hook that bootstraps `using-fianu-skills`.
 - `scripts/` — `bump-version.sh` (lockstep version updates) and `validate-skills.sh` (frontmatter + canary-string lint).
 - `docs/architecture.md` and `docs/authoring-skills.md` — design docs for contributors.
@@ -27,7 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Versioning
 
-`scripts/bump-version.sh <new-version>` is the only supported way to change the plugin version. It updates `package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `.codex-plugin/plugin.json`, and `gemini-extension.json` in lockstep, and inserts a CHANGELOG.md heading. Editing manifests by hand will drift versions and break `/plugin install`.
+`scripts/bump-version.sh <new-version>` is the only supported way to change the plugin version. It updates `package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `.codex-plugin/plugin.json`, `gemini-extension.json`, and the root `plugin.json` (Copilot) in lockstep, and inserts a CHANGELOG.md heading. Editing manifests by hand will drift versions and break `/plugin install`.
 
 ## Validation
 

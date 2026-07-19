@@ -4,7 +4,7 @@ Skills for building AI agents that operate on the [Fianu](https://fianu.io)
 compliance platform — covering ticket workflows, entity management, evidence
 summaries, and compliance-framework ingestion.
 
-Installs as a plugin in Claude Code, Codex CLI, and Gemini CLI.
+Installs as a plugin in Claude Code, Codex CLI, Gemini CLI, and GitHub Copilot CLI.
 
 ## Install
 
@@ -27,6 +27,12 @@ Then search `fianu-skills` and select Install Plugin.
 
 ```
 gemini extensions install https://github.com/fianulabs/fianu-skills
+```
+
+### GitHub Copilot CLI
+
+```
+copilot plugin install fianulabs/fianu-skills
 ```
 
 ## What's inside

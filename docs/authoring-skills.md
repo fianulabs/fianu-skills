@@ -62,12 +62,12 @@ The description is the load trigger. Bad descriptions cause skills not to load w
 
 ## Versioning
 
-`scripts/bump-version.sh <new-version>` is the only supported way to change the plugin version. It updates the five manifest files plus the CHANGELOG.md heading in lockstep. Never edit a manifest version by hand.
+`scripts/bump-version.sh <new-version>` is the only supported way to change the plugin version. It updates the six manifest files plus the CHANGELOG.md heading in lockstep. Never edit a manifest version by hand.
 
 ## Cross-harness considerations
 
-Skills are loaded by Claude Code, Codex CLI, and Gemini CLI from the same `skills/` tree. When writing a skill:
+Skills are loaded by Claude Code, Codex CLI, Gemini CLI, and GitHub Copilot CLI from the same `skills/` tree. When writing a skill:
 
-- Use Claude Code tool names (`Skill`, `Bash`, `Read`, `Edit`, etc.). Tool-name mapping for other harnesses lives in `skills/using-fianu-skills/references/codex-tools.md` and `gemini-tools.md`.
+- Use Claude Code tool names (`Skill`, `Bash`, `Read`, `Edit`, etc.). Tool-name mapping for other harnesses lives in `skills/using-fianu-skills/references/codex-tools.md`, `gemini-tools.md`, and `copilot-tools.md`.
 - Don't write skills that depend on a specific harness's exotic feature. Stick to the lowest common denominator (markdown + plain shell where needed).
-- The SessionStart hook (`hooks/session-start`) is a Claude Code feature. Gemini's equivalent is the `@`-import in `GEMINI.md`. Codex auto-discovers skills from `.codex-plugin/plugin.json`'s `skills` field.
+- The SessionStart hook (`hooks/session-start`) is a Claude Code feature. Gemini's equivalent is the `@`-import in `GEMINI.md`. Codex (`.codex-plugin/plugin.json`) and Copilot (root `plugin.json`) auto-discover skills from their `skills` field — no bootstrap nudge; the `using-fianu-skills` description is the load trigger.

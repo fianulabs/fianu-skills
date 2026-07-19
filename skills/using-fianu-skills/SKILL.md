@@ -60,4 +60,5 @@ fianu-skills from a different harness:
 
 - **Codex CLI:** see `references/codex-tools.md`
 - **Gemini CLI:** see `references/gemini-tools.md`
+- **GitHub Copilot CLI:** see `references/copilot-tools.md`
 - **Claude Code:** no mapping needed; tool names are native.
