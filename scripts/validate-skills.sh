@@ -6,6 +6,8 @@
 #   4. Canonical-home canaries: if a canary string appears anywhere in skills/*/SKILL.md
 #      it MUST be in its declared owner. Missing entirely is OK (warns) — that just
 #      means the canonical owner's body hasn't been written yet.
+#   5. Agent manifest: every skill named in manifests/agent-contexts.json resolves
+#      to an existing skills/<name>/SKILL.md.
 #
 # Exits non-zero on any violation.
 
@@ -120,6 +122,22 @@ done
 if [ -f /tmp/validate-skills.fail ]; then
     rm -f /tmp/validate-skills.fail
     FAIL=1
+fi
+
+# --- Check 5: agent manifest resolves ---
+# Every skill named in the agent manifest must map to an existing SKILL.md.
+# Value lines are bare quoted strings (optionally comma-terminated); key lines
+# end with ": [" and are excluded by the trailing anchor. Names are kebab-case
+# with no whitespace, so word-splitting the result is safe.
+MANIFEST="manifests/agent-contexts.json"
+if [ -f "$MANIFEST" ]; then
+    manifest_names="$(sed -n 's/^[[:space:]]*"\([a-z0-9-]*\)"[,]*[[:space:]]*$/\1/p' "$MANIFEST")"
+    for mname in $manifest_names; do
+        if [ ! -f "skills/$mname/SKILL.md" ]; then
+            echo "FAIL: $MANIFEST references '$mname' but skills/$mname/SKILL.md does not exist" >&2
+            FAIL=1
+        fi
+    done
 fi
 
 if [ "$FAIL" -eq 0 ]; then

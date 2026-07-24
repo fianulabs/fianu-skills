@@ -1,0 +1,28 @@
+{
+  "control-creator": [
+    "using-fianu-best-practices",
+    "working-with-entities",
+    "designing-policy-templates",
+    "writing-rego-rules",
+    "writing-cel-expressions",
+    "matching-existing-controls"
+  ],
+  "framework-converter": [
+    "using-fianu-best-practices",
+    "converting-frameworks-to-controls",
+    "parsing-framework-documents",
+    "placing-entities-in-hierarchy",
+    "matching-existing-controls"
+  ],
+  "approval-manager": [
+    "using-fianu-best-practices",
+    "working-with-tickets",
+    "managing-ticket-approvals",
+    "computing-decision-confidence"
+  ],
+  "summarizer": [
+    "using-fianu-best-practices",
+    "summarizing-evidence",
+    "working-with-attestations"
+  ]
+}
