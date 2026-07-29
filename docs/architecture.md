@@ -1,6 +1,6 @@
 # Architecture
 
-`fianu-skills` ships 24 skills in 5 groups. Orchestrator skills (Group D) are the entry points an agent typically loads first; they declare their dependencies via `## Loads:` and the agent loads each one in turn.
+`fianu-skills` ships 25 skills in 5 groups. Orchestrator skills (Group D) are the entry points an agent typically loads first; they declare their dependencies via `## Loads:` and the agent loads each one in turn.
 
 ## Skill groups
 
@@ -11,7 +11,7 @@
 | `using-fianu-skills` | Bootstrap. Routes the agent to the right downstream skill based on user intent. Auto-loaded by the Claude Code SessionStart hook and Gemini CLI's `@`-import; Codex and Copilot CLIs discover it by frontmatter `description`. |
 | `using-fianu-best-practices` | Topical navigator over `references/FIANU.md` (the 905-line domain reference). Loaded whenever an agent needs to make a decision aligned with Fianu's domain model. |
 
-### Group B — Platform API (7)
+### Group B — Platform API (8)
 
 | Skill | Purpose |
 |---|---|
@@ -22,6 +22,7 @@
 | `working-with-indexes` | The `/entities/indexes` HTTP surface + compute lifecycle for materialized CEL asset scopes. |
 | `working-with-llm-context-rules` | LLM context rule pods. Parent-walk pattern. The 0.70 confidence cap when no pod exists. |
 | `working-with-evidence-plugins` | Plugin catalog + schema discovery. |
+| `working-with-findings-and-violations` | Read violations/findings/vulnerabilities off an asset or note (`/evidence/assets/:asset/violations`, `/notes/:uuid/findings`, raw note) + the commit-vs-artifact-vs-both series search. Canonical home for the build-info "Unknown" fix. |
 
 ### Group C — Logic primitives (8)
 
