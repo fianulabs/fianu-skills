@@ -1,22 +1,27 @@
 ---
 name: working-with-findings-and-violations
-description: "Use when reading Fianu violations, findings, or vulnerabilities for an asset or note (CVE/CWE/CVSS, SBOM, SAST/SCA results), or when build-info controls (Artifact Signature, Artifact Version, SBOM) come back Unknown / not-resolvable. Covers GET /evidence/assets/:asset/violations, GET /notes/:uuid/findings, GET /notes/:uuid?format=raw, and the commit-vs-artifact-vs-both series-search model the console dashboard uses."
+description: "Use when reading Fianu violations, findings, or vulnerabilities for an asset or note — CVE/CWE/CVSS detail, SAST/SCA/SBOM results, the policy-breaking subset vs every vulnerability. Covers GET /evidence/assets/:asset/violations, GET /notes/:uuid/findings, GET /notes/:uuid?format=raw, and the normalized Finding schema."
 ---
 
 # Working with Findings and Violations
+
+## Loads
+
+- `working-with-asset-series`
 
 ## Overview
 
 This skill is the canonical home for **reading the security detail** on an
 asset or evidence note — violations (policy-breaking), findings (every
-normalized vulnerability), and the raw note display — plus the **series-search
-model** that decides whether you get commit evidence, artifact/digest
-evidence, or both.
+normalized vulnerability), and the raw note display.
 
 Load it when the user asks to list violations / findings / vulnerabilities for
-an asset or note, or when build-info controls (Artifact Signature, Artifact
-Version, SBOM) show up as **Unknown / not resolvable** — that is a
-series-search problem, not an access problem (see `## Series search`).
+an asset or note.
+
+Every read here is **series-keyed**: you must target the right series or
+evidence that exists returns empty. The series model, the three query modes,
+and the Unknown-vs-notFound distinction are owned by
+`working-with-asset-series` — load it first; this skill does not restate it.
 
 For the attestation **result vocabulary** (`pass` / `fail` / `warn` /
 `notRequired` / `notFound`), the computed-policy meta, and manual upload, load
@@ -78,87 +83,25 @@ Cite `id`, `identifiers` (CVE/CWE/GHSA), `scores.cvss`, and
 JSON summary of one of these, hand off to `summarizing-evidence` for the output
 contract.
 
-## Series search — commit vs artifact/digest vs both
+## Targeting the right series
 
-This is the model the console dashboard uses, and the fix for build-info
-controls that show **Unknown**.
+The violations endpoint requires a `seriesId`, and it only returns what exists
+**on that series**. A finding or violation is invisible from the wrong series.
 
-An asset is not evaluated at "a commit" — it is evaluated across **multiple
-series**, each with a `seriesType`:
+Load `working-with-asset-series` for the series catalog, the three query modes
+(single-series, cross-series, and series discovery), and the
+Unknown-vs-notFound distinction. Two consequences matter most here:
 
-| seriesType | Keyed by | Controls that attest here (typical) |
-|---|---|---|
-| `commit` | git SHA | Build, Code Coverage, Code Review, SAST/SCA, Unit Tests, PR, Jira |
-| `tag` | ref/tag name | tag-scoped controls |
-| `artifact` / `digest` | built-artifact hash / image digest | **Artifact Signature, Artifact Version, SBOM** |
-
-**The trap:** query only the `commit` series (pass a git SHA as `seriesId`) and
-the artifact-series controls have no attestation on that series — they come back
-`Unknown` / "not resolvable via API". Nothing is missing from the API; you
-asked the wrong series. This is distinct from a genuine `notFound` (see below).
-
-### Pick the search based on intent
-
-1. **Commit evidence only** — CI/quality controls at a SHA:
-   ```
-   GET /evidence/assets/:asset/violations?seriesId=<commit sha>
-   GET /evidence/assets/:asset/attestations/snapshot?seriesId=<commit sha>   # all results, not just violations
-   ```
-
-2. **Artifact / digest evidence only** — signature, version, SBOM:
-   ```
-   GET /evidence/assets/:asset/attestations/snapshot?seriesId=<artifact or digest series id>
-   ```
-
-3. **Both (dashboard parity)** — the full control picture the console shows.
-   Query one series as primary and pull the linked series in via
-   `associations`. This is what the web client does
-   (`call_getAttestationEvidenceBySeries`):
-   ```http
-   POST /evidence/assets/:asset/attestations/snapshot
-   { "seriesId": "<primary series id>",
-     "associations": [ { "seriesName": "commit", "seriesId": "<linked series id>" } ] }
-   ```
-   The response merges evidence across the primary and associated series, so
-   commit-series *and* artifact-series controls resolve together.
-
-### Discovering an asset's linked series
-
-If you only have the commit SHA and need the artifact/digest series id (or vice
-versa), resolve the linked series first:
-
-```http
-POST /evidence/assets/by-series
-{ "asset": "<asset uuid>", "seriesId": "<known series id>", "associations": true }
-```
-
-Then feed the discovered series id into search #2 or #3.
-
-### Decision recipe
-
-- User asks "violations/findings at this commit" → search #1.
-- User asks about signing, provenance, SBOM, artifact version → search #2 (or #3 if they also want commit context).
-- User asks for "all controls / the full status / dashboard view" → search #3, or the artifact-series controls will misreport as Unknown.
-
-> Do **not** use `POST /evidence/assets/batch/snapshot` to reach artifact
-> evidence — its `seriesType` accepts only `branch` / `commit`. It is for
-> multi-asset commit/branch snapshots, not cross-series resolution.
-
-## Unknown vs Not Found — do not conflate
-
-| Reported | Meaning | Cause |
-|---|---|---|
-| **Not Found** (`notFound`) | No evidence was produced on the series you queried. | The control legitimately has no attestation there. |
-| **Unknown / not resolvable** | The tool could not resolve the control because it never queried the series that control attests on. | Wrong series (usually: only searched `commit`, control lives on `artifact`). Fixable with search #2/#3. |
-
-Report an artifact control as Unknown **only after** attempting the artifact
-series. Do not tell a user evidence "isn't available via the API" when it is
-on a series you did not search.
+- Passing a git SHA reaches **`commit`**-keyed controls only. SBOM, artifact
+  signature, and artifact version are **`digest`**-keyed and will not appear.
+- An empty violations array means "no violations **on the series you asked
+  for**" — not "this asset is clean". Confirm the series before reporting it.
 
 ## Edge cases
 
-- **Empty violations** — a passing asset returns `[]` from the violations
-  endpoint. That is a clean result, not an error.
+- **Empty violations** — `[]` means no violations on the series you queried.
+  Clean result, not an error — but confirm the series before calling the asset
+  clean (see `## Targeting the right series`).
 - **Note 404** — `:uuid` deleted or never existed; surface the missing
   reference, do not retry.
 - **Findings on an attestation note** — the endpoint auto-resolves to the
@@ -169,24 +112,25 @@ on a series you did not search.
 
 ## Maintenance — keeping this skill accurate
 
-Endpoint paths + the associations body are grounded in the Fianu web client
+Endpoint paths are grounded in the Fianu web client
 (`ui-fianu/src/functions/api.js`: `call_fetchAssetViolationsSnapshot`,
-`fetchNoteFindings`, `fetchNotes`, `call_getAttestationEvidenceBySeries`,
-`call_getEvidenceAssetsBySeries`) and the `../core` handlers
+`fetchNoteFindings`, `fetchNotes`) and the `../core` handlers
 (`server/consulta/routes/evidence.go` violations route,
-`server/consulta/routes/findings.go`, `server/consulta/routes/asset.go`
-by-series). The `Finding` schema is `../core` `pkg/findings/types.go`. Response
-shapes are otherwise client-observed. Before release, verify:
+`server/consulta/routes/findings.go`). The `Finding` schema is `../core`
+`pkg/findings/types.go`. Response shapes are otherwise client-observed. Before
+release, verify:
 
 | Claim | Verify against |
 |---|---|
 | `GET /evidence/assets/:asset/violations` requires `seriesId` | `evidence.go` route + `SelectAssetViolationsArgs` |
 | `Finding` fields | `pkg/findings/types.go` |
-| `associations` body merges linked-series evidence | `NewAssetAttestationEvidenceSnapshotForSeriesFromBody` |
-| Which `seriesType` each build-info control attests on | control definitions in `../official-controls` |
+| Violations returns only attestations with non-empty violation display | `SelectAssetViolations` query |
+
+Series mechanics are **not** maintained here — see `working-with-asset-series`.
 
 ## See also
 
+- `working-with-asset-series` — the series catalog and the three query modes every read here depends on.
 - `working-with-attestations` — result vocabulary, computed-policy meta, manual upload.
 - `summarizing-evidence` — JSON summary output schema for a finding/violation.
 - `working-with-release-gating` — rolling attestations up into a gate pass/fail.

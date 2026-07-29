@@ -34,8 +34,9 @@ Key gotchas (load the canonical skill before acting on any of these):
 |---|---|
 | "Analyze this ticket" / fact-only ticket commentary | `analyzing-tickets` |
 | "Approve / deny this ticket" / autonomous workflow | `managing-ticket-approvals` |
+| Querying evidence at a commit / digest / release — picking the right series | `working-with-asset-series` |
+| Build-info controls (Artifact Signature / Version, SBOM) show Unknown / not resolvable | `working-with-asset-series` |
 | List violations / findings / vulnerabilities for an asset or note | `working-with-findings-and-violations` |
-| Build-info controls (Artifact Signature / Version, SBOM) show Unknown / not resolvable | `working-with-findings-and-violations` |
 | Produce a JSON summary of a finding/violation/attestation (output schema) | `summarizing-evidence` |
 | "Ingest this compliance framework" / map to controls | `converting-frameworks-to-controls` |
 | "Deploy entities from source" / `fianu console deploy` / Terraform `fianu_*` | `deploying-entities-as-code` |

@@ -131,7 +131,8 @@ the sibling repos when in doubt.
 
 ## See also
 
-- `working-with-findings-and-violations` — reading violations / findings / vulnerabilities off an asset or note, and the commit-vs-artifact-vs-both series search (load this when build-info controls show Unknown).
+- `working-with-asset-series` — the series model and the series-keyed evidence queries (snapshots, cross-series `associations`, series discovery). Load it when targeting evidence at a commit / digest / release, or when build-info controls read Unknown.
+- `working-with-findings-and-violations` — reading violations / findings / vulnerabilities off an asset or note.
 - `summarizing-evidence` — the JSON output schema for the finding summary this skill fetches.
 - `working-with-release-gating` — how attestations roll up into a gate decision and a release status.
 - `working-with-entities` — controls (which produce attestations) and their read/write contract.
