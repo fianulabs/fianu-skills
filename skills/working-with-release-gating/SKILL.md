@@ -120,6 +120,7 @@ Endpoint paths + params are grounded in the Fianu web client
 ## See also
 
 - `working-with-attestations` — the per-control results this skill rolls up.
+- `working-with-asset-series` — picking the series a gate check queries (`?commit=` reaches commit-keyed controls only).
 - `working-with-entities` — the gate **config** read (`GET /gates/:key`) and the draft/approval flow for editing gates.
 - `working-with-indexes` — gates scope their variations with indexes.
 - `using-fianu-best-practices` → FIANU.md §Gates / §Releases — enforcement semantics and the release model.

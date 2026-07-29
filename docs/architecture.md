@@ -1,6 +1,6 @@
 # Architecture
 
-`fianu-skills` ships 24 skills in 5 groups. Orchestrator skills (Group D) are the entry points an agent typically loads first; they declare their dependencies via `## Loads:` and the agent loads each one in turn.
+`fianu-skills` ships 26 skills in 5 groups. Orchestrator skills (Group D) are the entry points an agent typically loads first; they declare their dependencies via `## Loads:` and the agent loads each one in turn.
 
 ## Skill groups
 
@@ -11,7 +11,7 @@
 | `using-fianu-skills` | Bootstrap. Routes the agent to the right downstream skill based on user intent. Auto-loaded by the Claude Code SessionStart hook and Gemini CLI's `@`-import; Codex and Copilot CLIs discover it by frontmatter `description`. |
 | `using-fianu-best-practices` | Topical navigator over `references/FIANU.md` (the 905-line domain reference). Loaded whenever an agent needs to make a decision aligned with Fianu's domain model. |
 
-### Group B — Platform API (7)
+### Group B — Platform API (9)
 
 | Skill | Purpose |
 |---|---|
@@ -22,6 +22,8 @@
 | `working-with-indexes` | The `/entities/indexes` HTTP surface + compute lifecycle for materialized CEL asset scopes. |
 | `working-with-llm-context-rules` | LLM context rule pods. Parent-walk pattern. The 0.70 confidence cap when no pod exists. |
 | `working-with-evidence-plugins` | Plugin catalog + schema discovery. |
+| `working-with-asset-series` | **Foundation for every evidence query.** The series catalog (`digest`/`uri`/`commit`/`release`/`jira_*`/`period_*` + codes), the seriesName/seriesCode/seriesId/seriesType axes, the snapshot endpoints, cross-series `associations`, and series discovery. Canonical home for the build-info "Unknown" fix. |
+| `working-with-findings-and-violations` | Read violations/findings/vulnerabilities off an asset or note (`/evidence/assets/:asset/violations`, `/notes/:uuid/findings`, raw note) + the normalized `Finding` schema. Loads `working-with-asset-series`. |
 
 ### Group C — Logic primitives (8)
 
@@ -76,6 +78,14 @@ Current canaries and their owners:
 | `bot\|fianu-agent` | `working-with-tickets` |
 | `GET /pods/entities` | `working-with-llm-context-rules` |
 | `import rego.v1` | `writing-rego-rules` |
+| `/internal/upload` | `working-with-attestations` |
+| `/assets/releases/` | `working-with-release-gating` |
+| `recomputeStatus` | `working-with-indexes` |
+| `.(list_string)` | `writing-cel-expressions` |
+| `/notes/:uuid/findings` | `working-with-findings-and-violations` |
+| `/evidence/assets/by-series` | `working-with-asset-series` |
+| `ValidSeriesNames` | `working-with-asset-series` |
+| `attestations/snapshot` | `working-with-asset-series` |
 
 The canary check is scoped to SKILL.md *bodies* only — descriptions in frontmatter are load triggers and may legitimately mention canonical keywords. To add a new canary, edit the `CANARIES` variable in `scripts/validate-skills.sh`.
 

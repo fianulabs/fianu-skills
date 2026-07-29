@@ -31,6 +31,10 @@ CANARIES="$(printf '%s\t%s\n' \
     '/assets/releases/'         'working-with-release-gating' \
     'recomputeStatus'           'working-with-indexes' \
     '.(list_string)'            'writing-cel-expressions' \
+    '/notes/:uuid/findings'     'working-with-findings-and-violations' \
+    '/evidence/assets/by-series' 'working-with-asset-series' \
+    'ValidSeriesNames'          'working-with-asset-series' \
+    'attestations/snapshot'     'working-with-asset-series' \
 )"
 
 # --- Check 1+2+3: frontmatter ---

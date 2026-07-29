@@ -6,7 +6,11 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [v0.3.0] - 2026-07-29
+
 ### Added
+- `working-with-asset-series` (Group B) — the foundation under every evidence query: the series catalog (`digest` / `uri` / `commit` / `release` / `jira_*` / `period_*` with their codes), the `seriesName` / `seriesCode` / `seriesId` / `seriesType` axes, which series a control binds to, the snapshot endpoints, cross-series queries via `associations`, and series discovery. Canonical home for the build-info "Unknown" fix: Artifact Signature / Version and SBOM attest on the `digest` series, not the git commit.
+- `working-with-findings-and-violations` (Group B) — reading violations / findings / vulnerabilities off an asset or note (`GET /evidence/assets/:asset/violations`, `GET /notes/:uuid/findings`, `GET /notes/:uuid?format=raw`) and the normalized `Finding` schema. Loads `working-with-asset-series`.
 - GitHub Copilot CLI support: root `plugin.json` manifest (`skills: ./skills/`) and `using-fianu-skills/references/copilot-tools.md` tool-name mapping. Install with `copilot plugin install fianulabs/fianu-skills`.
 
 ## [v0.2.2] - 2026-06-26
