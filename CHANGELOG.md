@@ -6,13 +6,12 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [v0.3.0] - 2026-07-29
+## [v0.4.0] - 2026-07-30
 
 ### Added
 - `working-with-asset-series` (Group B) — the foundation under every evidence query: the series catalog (`digest` 2110 / `uri` 2111 / `commit` 2112 / `tag` 2113 / `release` 2116 / `timestamp` 2117 / `period_*` 2118–2122), the four series axes (`seriesName` / `seriesCode` / `seriesId` / `seriesType`), how an attestation lands on exactly one series (lowest code the occurrence carries), the snapshot and `export` endpoints, cross-series `associations`, and series discovery. Canonical home for "a control is missing from my results at this commit".
 - `working-with-findings-and-violations` (Group B) — reading violations / findings / vulnerabilities off an asset or note (`GET /evidence/assets/:asset/violations`, `GET /notes/:uuid/findings`, `GET /notes/:uuid?format=raw`), the normalized `Finding` schema, and the violations-vs-findings pipeline distinction. Loads `working-with-asset-series`.
 - `working-with-attestations` — new section on reading a failing control's **measured value**, threshold, and failed items off `GET /notes/:uuid?format=raw` (`$.detail.*`, `$.policy.data.*`, `$.policy.evaluation.logs[]`, `$.display.violations.rows`), plus the threshold-vs-item-based failure-shape distinction.
-- GitHub Copilot CLI support: root `plugin.json` manifest (`skills: ./skills/`) and `using-fianu-skills/references/copilot-tools.md` tool-name mapping. Install with `copilot plugin install fianulabs/fianu-skills`.
 
 ### Fixed
 - **`working-with-attestations`: removed "Prefer this over the per-policy fan-out" from `GET /notes/attestations/:uuid/meta`.** That endpoint returns policy provenance only — no `result`, no `detail`, no `display` — so the guidance sent agents to the one endpoint that cannot answer "what was the measured value", producing false "Fianu doesn't persist the measurement" conclusions. Now labelled explicitly, with the raw-note path documented alongside.
@@ -35,6 +34,11 @@ to [Semantic Versioning](https://semver.org/).
 - Attestation history route is `GET /entities/:entity_id/attestations` (exposed through the proxy as `/api/controls/:entity_id/attestations`) — the previously documented `/controls/:entity_key/attestations` does not exist. Manual upload path params are `:control_entity_key` / `:action`; agent summary param is `:finding_id`.
 - Narrowed "the evidence query never filters on series name or code" — true of the primary predicate, but association entries do filter on `seriesName` / `seriesCode`.
 - Corrected the JFrog Xray control count (five, not three) and softened "empty by design" on threshold controls to an authoring convention, which is what the code supports.
+
+## [v0.3.0] - 2026-07-29
+
+### Added
+- GitHub Copilot CLI support: root `plugin.json` manifest (`skills: ./skills/`) and `using-fianu-skills/references/copilot-tools.md` tool-name mapping. Install with `copilot plugin install fianulabs/fianu-skills`.
 
 ## [v0.2.2] - 2026-06-26
 
