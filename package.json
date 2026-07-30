@@ -1,6 +1,6 @@
 {
   "name": "fianu-skills",
-  "version": "v0.3.0",
+  "version": "v0.4.0",
   "description": "Skills for building AI agents that operate on the Fianu compliance platform.",
   "license": "Apache-2.0",
   "repository": { "type": "git", "url": "https://github.com/fianulabs/fianu-skills.git" }

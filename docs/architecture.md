@@ -17,13 +17,13 @@
 |---|---|
 | `working-with-tickets` | Canonical home for the Ticket/Condition/Activity data model, ticket endpoints, the bot identity convention, and the nested-approvers lookup gotcha. |
 | `working-with-entities` | Read/write controls, policies, exceptions, gates. Draft + approval-ticket flow. |
-| `working-with-attestations` | Read attestation results / history / computed-policy meta, submit manual attestations, the pass/fail/notRequired/notFound vocabulary. |
+| `working-with-attestations` | Read attestation results / history, the six-value result vocabulary, manual upload, and **reading a failing control's measured value / threshold / failed items off the raw note**. Owns the warning that `/meta` is policy-provenance only. |
 | `working-with-release-gating` | Runtime gate evaluation against assets/releases + the release lifecycle (gate *config* reads stay in `working-with-entities`). |
 | `working-with-indexes` | The `/entities/indexes` HTTP surface + compute lifecycle for materialized CEL asset scopes. |
 | `working-with-llm-context-rules` | LLM context rule pods. Parent-walk pattern. The 0.70 confidence cap when no pod exists. |
 | `working-with-evidence-plugins` | Plugin catalog + schema discovery. |
-| `working-with-asset-series` | **Foundation for every evidence query.** The series catalog (`digest`/`uri`/`commit`/`release`/`jira_*`/`period_*` + codes), the seriesName/seriesCode/seriesId/seriesType axes, the snapshot endpoints, cross-series `associations`, and series discovery. Canonical home for the build-info "Unknown" fix. |
-| `working-with-findings-and-violations` | Read violations/findings/vulnerabilities off an asset or note (`/evidence/assets/:asset/violations`, `/notes/:uuid/findings`, raw note) + the normalized `Finding` schema. Loads `working-with-asset-series`. |
+| `working-with-asset-series` | **Foundation for every evidence query.** The series catalog (`digest`/`uri`/`commit`/`tag`/`release`/`timestamp`/`period_*` + codes), the four series axes, the snapshot + `export` endpoints, cross-series `associations`, and series discovery. Canonical home for "a control is missing from my results". |
+| `working-with-findings-and-violations` | Read violations/findings/vulnerabilities off an asset or note (`/evidence/assets/:asset/violations`, `/notes/:uuid/findings`, raw note) + the normalized `Finding` schema. Owns the violations-vs-findings pipeline distinction. Loads `working-with-asset-series`. |
 
 ### Group C — Logic primitives (8)
 
@@ -83,9 +83,12 @@ Current canaries and their owners:
 | `recomputeStatus` | `working-with-indexes` |
 | `.(list_string)` | `writing-cel-expressions` |
 | `/notes/:uuid/findings` | `working-with-findings-and-violations` |
+| `record_violation` | `working-with-findings-and-violations` |
 | `/evidence/assets/by-series` | `working-with-asset-series` |
-| `ValidSeriesNames` | `working-with-asset-series` |
+| `series_catalog` | `working-with-asset-series` |
+| `attestations/export` | `working-with-asset-series` |
 | `attestations/snapshot` | `working-with-asset-series` |
+| `policy.evaluation.logs` | `working-with-attestations` |
 
 The canary check is scoped to SKILL.md *bodies* only — descriptions in frontmatter are load triggers and may legitimately mention canonical keywords. To add a new canary, edit the `CANARIES` variable in `scripts/validate-skills.sh`.
 
