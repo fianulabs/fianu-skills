@@ -20,7 +20,7 @@ an asset or note.
 
 Every read here is **series-keyed**: you must target the right series or
 evidence that exists returns empty. The series model, the three query modes,
-and the Unknown-vs-notFound distinction are owned by
+and the missing-control diagnosis are owned by
 `working-with-asset-series` — load it first; this skill does not restate it.
 
 For the attestation **result vocabulary** (`pass` / `fail` / `warn` /
@@ -31,30 +31,53 @@ For the attestation **result vocabulary** (`pass` / `fail` / `warn` /
 Response shapes below are grounded in the `../core` route handlers and the
 Fianu web client (`ui-fianu/src/functions/api.js`) — see `## Maintenance`.
 
-## Findings vs violations — they are not the same thing
+## Findings vs violations — two independent pipelines
 
-| Term | What it is | Where it comes from |
+These are **not** subset and superset. They are produced by different
+mechanisms at different times, and either can exist without the other.
+
+| Term | What it is | Produced by |
 |---|---|---|
-| **Finding** | One normalized item extracted from a note's plugin data — a vulnerability, a code-scan hit, a dependency issue. The **superset**: all of them, whether or not they break policy. | `GET /notes/:uuid/findings` |
-| **Violation** | The **policy-breaking subset** — a finding (or attestation) that the active policy failed on. Every violation is a finding; most findings are not violations. | `GET /evidence/assets/:asset/violations`, or the violation rows inside the raw note |
+| **Violation** | An arbitrary object a Rego rule chose to record when it failed. Untyped (`map[string]any`) — its shape is whatever the rule author wrote. | `fianu.record_violation()` at **evaluation** time, landing in `display.violations.rows` on the attestation |
+| **Finding** | A *normalized, typed* item extracted from the occurrence's plugin data. | Plugin **schema annotations** at **read** time, when you call `/notes/:uuid/findings` |
 
-A finding carries `isViolation: true` when it is also a violation. When the
-user says "violations", give the policy-breaking set; when they say "findings"
-or "all vulnerabilities", give the full set.
+**"Every violation is a finding" is false.** The two are joined only by an
+opt-in, best-effort correlation performed **at read time**: when you call
+`/findings`, the service derives match keys from the plugin schema's match-key
+mappings, stamps `_finding_match_key` onto the violation objects in memory, and
+pairs them with findings whose `matchKey` equals it. Nothing is pre-stamped
+during evaluation, and the rule author does not emit this field. If the schema
+has no findings annotations, or the derived keys don't line up, you get
+violations with zero correlated findings.
+
+Consequences that will bite you:
+
+- **Findings are opt-in per plugin.** A plugin whose schema has no
+  `x-findings-*` annotations yields an **empty** findings array no matter how
+  much evidence exists. SonarQube is one such plugin today — coverage and
+  code-scan data will **not** appear via `/findings`. Read it off the raw note
+  instead (see `working-with-attestations`).
+- **`isViolation` is only populated when `:uuid` is an attestation.** Pass an
+  occurrence UUID and every finding comes back without it, even when
+  violations exist.
+
+When the user says "violations", read `display.violations.rows` or the
+violations endpoint. When they say "all vulnerabilities", try `/findings` — and
+if it returns empty, fall back to the raw note rather than reporting no data.
 
 ## Read endpoints
 
 ```
-GET /evidence/assets/:asset/violations?branch=&seriesId=      seriesId REQUIRED
+GET /evidence/assets/:asset/violations?seriesId=      seriesId REQUIRED
 GET /notes/:uuid/findings
 GET /notes/:uuid?format=raw
 ```
 
 | Endpoint | Returns | Notes |
 |---|---|---|
-| `GET /evidence/assets/:asset/violations?seriesId=` | `assetViolationSnapshotV001[]` — each entry: `control` / `collection` / `domain` refs + one `attestation` (`result`, `status`, `timestamp`, `policyType`, `display`). | **`seriesId` is required** (400 without it). Only attestations whose display has non-empty violations are returned — a clean asset yields `[]`. `branch` optional. |
-| `GET /notes/:uuid/findings` | `findingsResponse` = `{ findings: Finding[], metadata: { producerTool, noteUUID, total } }`. | The **expansive** view: every vulnerability, not just violations. If `:uuid` is an attestation note it resolves to the parent occurrence first, then extracts findings via the plugin schema annotations. |
-| `GET /notes/:uuid?format=raw` | The raw note display payload. | Violation rows live inside the display. Use when you need the producer's exact structure rather than the normalized `Finding` shape. |
+| `GET /evidence/assets/:asset/violations?seriesId=` | `assetViolationSnapshotV001[]` — each entry: `control` / `collection` / `domain` refs + one `attestation` (`uuid`, `result`, `status`, `timestamp`, `policyType`, `display`). | **`seriesId` is required** — 400 without it. Only attestations whose `display.violations.rows` is a non-empty array are returned. **Controls only** — gate attestations are excluded. A clean asset yields `[]` (never `null`). There is **no `branch` parameter** — the route ignores it; the web client sends one anyway. |
+| `GET /notes/:uuid/findings` | `findingsResponse` = `{ findings: Finding[], metadata: { producerTool, noteUUID, total } }`. | Requires plugin schema findings annotations — returns `{ findings: [] }` when absent. If `:uuid` is an attestation it resolves to the parent occurrence first. |
+| `GET /notes/:uuid?format=raw` | The complete note: `detail`, `display`, `policy`, `parent`. | Violation rows are at `$.display.violations.rows`. `format=raw` is required — the default `pretty` strips `display` to `{tag, color}`. |
 
 ## The Finding schema
 
@@ -64,19 +87,42 @@ GET /notes/:uuid?format=raw
 {
   "id": "CVE-2023-1234",
   "title": "…",
-  "severity": "high",              // critical | high | medium | low | …
-  "category": "…",                 // e.g. vulnerability, license, secret
-  "source": { "package": "", "file": "", "line": 0, "commit": "", "packageManager": "", "scope": "" },
+  "severity": "high",              // lowercased; NOT an enum — see below
+  "category": "vulnerability",     // vulnerability | sast | secret | misconfiguration
+                                   //  | license | quality | process | test
+  "source": { "package": "log4j-core", "file": "pom.xml", "line": 42,
+              "commit": "…", "packageManager": "maven", "scope": "…" },
   "identifiers": [ { "type": "CVE", "value": "CVE-2023-1234" },
                    { "type": "CWE", "value": "CWE-79" } ],
   "scores":   { "cvss": 9.8, "cvssVector": "…" },
   "versions": { "vulnerable": "<2.17.0", "fixed": "2.17.0" },
   "remediation": { "guidance": "…", "links": [ { "label": "…", "url": "…" } ] },
-  "isViolation": true,             // this finding is also a policy violation
+  "matchKey": "…",                 // the key violations correlate against
+  "isViolation": true,             // ABSENT when false, never `false`
   "violation": { … },              // present when isViolation
   "context": { … }, "raw": { … }
 }
 ```
+
+Shape gotchas, all `omitempty`:
+
+- `source`, `scores`, `versions`, `remediation` are **pointers** — the whole
+  object is absent rather than present-and-empty. Their inner fields are
+  `omitempty` too, so you will never see `""` or `line: 0`; those keys just
+  vanish. `source.line` is a nullable int.
+- `isViolation` is `omitempty` on a bool — **absent means false.** Do not
+  test for `=== false`.
+- `matchKey` is the join key between findings and violations. Correlation uses
+  it **exclusively** — a finding with an empty `matchKey` is skipped, and there
+  is no `id` fallback. (`id` is only a fallback for the separate single-finding
+  lookup `/findings/:finding_id`.)
+
+**`severity` is not an enumerated set.** It is lowercased and otherwise passed
+through verbatim from the plugin schema's value map, so unmapped values survive
+as-is. `critical` / `high` / `medium` / `low` / `info` are commonly seen, but
+nothing in the platform constrains it — do not branch on an assumed closed set.
+`category` *is* backed by real constants (the eight listed above), though it is
+also an unvalidated pass-through in practice.
 
 Cite `id`, `identifiers` (CVE/CWE/GHSA), `scores.cvss`, and
 `versions.fixed` when summarizing — never invent them. When the reader wants a
@@ -88,12 +134,12 @@ contract.
 The violations endpoint requires a `seriesId`, and it only returns what exists
 **on that series**. A finding or violation is invisible from the wrong series.
 
-Load `working-with-asset-series` for the series catalog, the three query modes
-(single-series, cross-series, and series discovery), and the
-Unknown-vs-notFound distinction. Two consequences matter most here:
+Load `working-with-asset-series` for the series catalog and the query modes.
+Two consequences matter most here:
 
-- Passing a git SHA reaches **`commit`**-keyed controls only. SBOM, artifact
-  signature, and artifact version are **`digest`**-keyed and will not appear.
+- An attestation lands on **exactly one** series — the lowest-coded one the
+  occurrence actually carried. A git SHA reaches commit-landed attestations;
+  artifact-oriented controls often land on `digest` and will not appear.
 - An empty violations array means "no violations **on the series you asked
   for**" — not "this asset is clean". Confirm the series before reporting it.
 
@@ -112,25 +158,27 @@ Unknown-vs-notFound distinction. Two consequences matter most here:
 
 ## Maintenance — keeping this skill accurate
 
-Endpoint paths are grounded in the Fianu web client
-(`ui-fianu/src/functions/api.js`: `call_fetchAssetViolationsSnapshot`,
-`fetchNoteFindings`, `fetchNotes`) and the `../core` handlers
-(`server/consulta/routes/evidence.go` violations route,
-`server/consulta/routes/findings.go`). The `Finding` schema is `../core`
-`pkg/findings/types.go`. Response shapes are otherwise client-observed. Before
-release, verify:
+Grounded in the `../core` Go handlers, **not** the web client — the client sends
+a `branch` param the violations route ignores, so do not re-ground this skill
+against `ui-fianu`.
 
-| Claim | Verify against |
+| Claim | Source |
 |---|---|
-| `GET /evidence/assets/:asset/violations` requires `seriesId` | `evidence.go` route + `SelectAssetViolationsArgs` |
-| `Finding` fields | `pkg/findings/types.go` |
-| Violations returns only attestations with non-empty violation display | `SelectAssetViolations` query |
+| Violations / findings routes | `server/consulta/routes/evidence.go`, `server/consulta/routes/findings.go` |
+| `GET /evidence/assets/:asset/violations` requires `seriesId` → 400 | `external/db/evidence/args.go` (`SelectAssetViolationsArgs.IsValid`) |
+| Only non-empty `display.violations.rows`; controls only, gates excluded | `external/db/evidence/v1/violations.go` |
+| `Finding` fields, `omitempty` behavior, `matchKey` | `pkg/findings/types.go` |
+| Violations come from Rego, findings from schema extraction; correlation is opt-in | `pkg/rego/customfunctions.go` (`fianu.record_violation`), `pkg/findings/service.go`, `pkg/findings/correlate.go` |
+| `isViolation` set only for attestation UUIDs | `pkg/findings/service.go` (correlation guarded on `attestation != nil`) |
+| `severity` unenumerated, lowercased; `category` constants | `pkg/findings/extract.go`, `pkg/findings/types.go` |
+| Findings empty without `x-findings-*` annotations (e.g. SonarQube) | `../fianu-plugins/kodata/schemas/` |
+| `[]` not `null` | `pkg/queries/consulta/route.go` |
 
 Series mechanics are **not** maintained here — see `working-with-asset-series`.
 
 ## See also
 
-- `working-with-asset-series` — the series catalog and the three query modes every read here depends on.
-- `working-with-attestations` — result vocabulary, computed-policy meta, manual upload.
+- `working-with-asset-series` — the series catalog and the query modes every read here depends on.
+- `working-with-attestations` — result vocabulary, and reading measured values / failure detail off a raw note.
 - `summarizing-evidence` — JSON summary output schema for a finding/violation.
 - `working-with-release-gating` — rolling attestations up into a gate pass/fail.
