@@ -14,12 +14,13 @@ permissions:
   contents: read
 
 env:
-  # Dev-first rollout: publishes to the dev-owned bucket. Update to the
-  # prod-shared bucket/role when prod rolls out.
-  AWS_REGION: us-east-1
-  SKILLS_BUCKET: fianu-dev-skills
-  # Must match the role provisioned in fianu-cloud (dev).
-  PUBLISHER_ROLE_ARN: arn:aws:iam::844883297709:role/github-actions-skills-publisher-dev
+  # Prod-owned shared bucket, consumed by every environment's agent. Dev keeps
+  # its own fianu-dev-skills bucket and points at it via SKILLS_BUCKET on the
+  # deployment side; this workflow only publishes the shared one.
+  AWS_REGION: us-east-2
+  SKILLS_BUCKET: fianu-skills
+  # Must match the role provisioned in fianu-cloud (environments/fianu-prod/aws).
+  PUBLISHER_ROLE_ARN: arn:aws:iam::844883297709:role/github-actions-skills-publisher
 
 jobs:
   publish:
