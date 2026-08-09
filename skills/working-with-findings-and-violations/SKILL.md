@@ -8,6 +8,7 @@ description: "Use when reading Fianu violations, findings, or vulnerabilities fo
 ## Loads
 
 - `working-with-asset-series`
+- `using-fianu-api` — for any endpoint this skill does not document
 
 ## Overview
 

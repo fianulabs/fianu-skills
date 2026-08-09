@@ -1,6 +1,6 @@
 ---
 name: deploying-entities-terraform
-description: Use when authoring or deploying Fianu entities via the `fianulabs/fianu` Terraform provider — `fianu_control`, `fianu_policy`, `fianu_gate`, `fianu_index` resources, the `fianu_control_test` action, OIDC vs static-bearer auth, the file() pattern for evaluation cases, the X-Fianu-Raw-Content wire format, and import via `<entity_type>/<entity_key>`.
+description: Use when authoring or deploying Fianu entities via the `fianulabs/fianu` Terraform provider — `fianu_control`, `fianu_policy`, `fianu_gate`, `fianu_index`, `fianu_environment`, `fianu_target`, `fianu_collection`, `fianu_notification`, `fianu_entity_pod`, and the `fianu_control_test` action. Covers OIDC vs static-bearer vs CLI-token auth, the file() pattern for evaluation cases, the X-Fianu-Raw-Content wire format, import via `<entity_type>/<entity_key>`, and the vendored provider schema docs.
 ---
 
 # Deploying Entities (Terraform)
@@ -16,26 +16,51 @@ Load this skill when an agent is authoring or applying entities via
 Terraform. For the on-disk YAML path, load `deploying-entities-yaml`. For
 shared deploy semantics, load `deploying-entities-as-code`.
 
-## Resources (provider `~> 0.2`)
+## Read the vendored provider docs for schemas
 
-| Resource | Status | Notes |
+`references/provider-docs/` is a verbatim copy of the provider's own
+documentation, vendored from the newest release tag. Those pages are generated
+upstream by `tfplugindocs` **from the live provider schemas**, so they are the
+authoritative HCL contract — every nested attribute, every enum, plus a worked
+`Example Usage` block per resource.
+
+**This skill does not restate those schemas.** When authoring a resource, read
+its page. `references/provider-docs/README.md` maps pages to resources and
+stamps the release tag the copy came from.
+
+```
+references/provider-docs/index.md                  provider block + auth attributes
+references/provider-docs/resources/<name>.md       fianu_<name> schema
+references/provider-docs/actions/control_test.md   fianu_control_test action
+```
+
+Read the one page you need — not the set. What this skill owns instead is
+everything the generated docs cannot express: auth setup, the `file()`
+pattern, the test-action wiring, the wire contract, cross-entity constraints,
+and the migration and edge cases below.
+
+## Resources (provider `~> 0.3`)
+
+All nine resources and the one action are released and available.
+
+| Resource | Purpose | Schema page |
 |---|---|---|
-| `fianu_control` | ✅ Available | Mirrors the on-disk control-package format. |
-| `fianu_policy` | ✅ Available | Standard and exception policies (set `detail.type = "exception"`). |
-| `fianu_gate` | ✅ Available | Server auto-fills evaluation logic + policy template; HCL exposes identity, config, env bindings, pods, optional inline policy. |
-| `fianu_index` | ✅ Available | Reusable asset-scope definitions (CEL over abstract asset types). |
-| `fianu_environment` | ⏳ v0.1.x | Not yet released. |
-| `fianu_target` | ⏳ v0.1.x | Not yet released. |
-| `fianu_collection` | ⏳ v0.1.x | Not yet released. |
+| `fianu_control` | Compliance control; mirrors the on-disk control-package format. | `resources/control.md` |
+| `fianu_policy` | Standard and exception policies (set `detail.type = "exception"`). | `resources/policy.md` |
+| `fianu_gate` | Composite gating decision. Server auto-fills evaluation logic and policy template; HCL exposes identity, config, environment bindings, native gate checks, optional inline policy. | `resources/gate.md` |
+| `fianu_index` | Reusable asset-scope definitions (CEL over abstract asset types). | `resources/index.md` |
+| `fianu_environment` | Named deployment stage; its `matching` CEL group decides which deployment events belong to it. | `resources/environment.md` |
+| `fianu_target` | Concrete cloud destination (EKS cluster, Cloud Run service, …) bound to one or more environments. | `resources/target.md` |
+| `fianu_collection` | Groups controls under a domain. `detail.domain` is the parent domain's **UUID**, not a path — domains stay Console-managed. | `resources/collection.md` |
+| `fianu_notification` | Typed notification config pod on a control or gate. One resource configures one notification *bucket*, and several emitted types share a bucket. | `resources/notification.md` |
+| `fianu_entity_pod` | Generic pod attachment — any pod type on any entity, `value` authored with `jsonencode`. Use when no typed resource exists; prefer `fianu_notification` for notification pods. | `resources/entity_pod.md` |
+| `fianu_control_test` (action) | Runs a control's rego rules against its fixtures. | `actions/control_test.md` |
 
-The provider also ships one action — `fianu_control_test` — for running
-rego rules against on-disk fixtures (see "Testing" below).
+Pods (`fianu_notification`, `fianu_entity_pod`) are **living configuration** —
+they change how an entity behaves without minting a new entity version. That
+is the opposite of every `detail` change, which does mint one.
 
 ## Provider configuration
-
-This mirrors the real working stack in
-`../fianu-cloud/environments/fianu-dev/controls/` (`versions.tf` +
-`providers.tf`):
 
 ```hcl
 # versions.tf
@@ -52,29 +77,30 @@ terraform {
   required_providers {
     fianu = {
       source  = "fianulabs/fianu"
-      version = "~> 0.2.0"             # current published surface
+      version = "~> 0.3.0"
     }
   }
 }
 
-# providers.tf — the real stack leaves the block empty and auths via env vars
+# providers.tf — leave the block empty and auth via environment variables
 provider "fianu" {}
 ```
 
 ### Authentication
 
-The real stack supplies credentials through environment variables rather than
-inline attributes. Attributes still work if you prefer them:
+`FIANU_HOST` (e.g. `https://console.dev.fianu.io`) is always required. Three
+credential paths, in order of preference:
 
 | Method | When to use | Variables (env / attribute) |
 |---|---|---|
-| OIDC client-credentials (preferred) | All non-CI use, and CI clients that can hold a long-lived secret | `FIANU_CLIENT_ID` / `client_id`, `FIANU_CLIENT_SECRET` / `client_secret`, optional `FIANU_TOKEN_URL` / `token_url`, optional `FIANU_AUDIENCE` / `audience` |
+| OIDC client-credentials | Default for everything | `FIANU_CLIENT_ID` / `client_id`, `FIANU_CLIENT_SECRET` / `client_secret` |
+| CLI token fallback | GitHub OIDC / WIF federated flows — no static secrets anywhere | none; the provider reads the token `fianu auth login` persisted at `~/.fianu/fianu.conf.v1` (override the dir with `FIANU_CLI_HOME_DIR`) |
 | Static bearer | CI service accounts that already hold a long-lived token | `FIANU_TOKEN` / `token` |
 
-`FIANU_HOST` (e.g. `https://console.dev.fianu.io`) is always required.
-`audience` defaults to `https://fianu.us.auth0.com/api/v2`; override only for
-private deployments. `token_url` defaults to
-`https://cloudauth.fianu.io/oauth/token`.
+`token` is mutually exclusive with the OIDC client-credentials fields.
+`audience` defaults to `https://fianu.us.auth0.com/api/v2`; `token_url`
+defaults to `https://cloudauth.fianu.io/oauth/token`. Override either only for
+private deployments. Full attribute reference: `provider-docs/index.md`.
 
 ## Resource shape (common across types)
 
@@ -87,7 +113,7 @@ resource "fianu_<type>" "<local_name>" {
     full_name   = "..."
     display_key = "<2-4 char code>"
     description = "..."
-    # type-specific fields below
+    # type-specific fields — see the resource's schema page
   }
 }
 ```
@@ -95,33 +121,16 @@ resource "fianu_<type>" "<local_name>" {
 Server-managed read-only attributes available after apply:
 
 - `id` — composite identifier `<entity_type>/<entity_key>` (used for import).
-- `uuid` — server-generated, stable across versions.
-- `version` — nested object: `semantic`, `state`, `status`, `timestamp`, `uuid`. Refetched after every Create/Update so `(known after apply)` plans are correct.
+- `uuid` — server-generated, stable across versions. Pod resources reference
+  their parent entity through this (`entity_uuid = fianu_control.sast.uuid`).
+- `version` — nested object: `semantic`, `state`, `status`, `timestamp`,
+  `uuid`. Refetched after every Create/Update so `(known after apply)` plans
+  are correct.
 
-## fianu_control — minimum viable example
+## Authoring a control — the detail fields that matter
 
-```hcl
-resource "fianu_control" "sast" {
-  path = "checkmarx.sast.vulnerabilities"
-  name = "SAST"
-
-  detail = {
-    full_name   = "Static Asset Security Analysis"
-    display_key = "CHXST"
-    description = "Validate SAST findings from Checkmarx."
-  }
-}
-```
-
-`path`, `name`, and `detail` are the only required top-level attributes;
-inside `detail`, only `evaluation` is required for a control that actually
-evaluates. The minimal block above is deployable but evaluates nothing.
-
-### detail fields expected in a real control
-
-The working example in `../fianu-cloud/environments/fianu-dev/controls/`
-(`terraform.example.iac.scan`) fills these out — copy this shape when
-generating a new control:
+`resources/control.md` carries the full schema. This is the shape a real
+control fills in, annotated with the skill that owns each decision:
 
 ```hcl
 detail = {
@@ -141,23 +150,23 @@ detail = {
 
   relations = [{                     # data subscription(s) that feed the rule
     domain     = "compliance.controls"
-    collection = "security"
+    collection = "security"          # → placing-entities-in-hierarchy
     path       = "f.demo.source.terraform.iac"
     note       = "occurrence"
     is_primary = true
-    producer   = { type = "plugin", path = "generic" }
+    producer   = { type = "plugin", path = "generic" }   # → working-with-evidence-plugins
   }]
 
   assets = [{                        # abstract asset types + series this applies to
-    type   = "repository"            # repository | module | artifact | release
+    type   = "repository"
     series = [{ name = "commit" }, { name = "tag" }]
   }]
 
-  policy_template = { measures = [ … ] }   # threshold schema; see designing-policy-templates
+  policy_template = { measures = [ … ] }   # → designing-policy-templates
 
-  evaluation = local.terraform_example_evaluation   # REQUIRED for real behavior
+  evaluation = local.evaluation      # REQUIRED for real behavior — see file() below
 
-  config = {                         # operational options
+  config = {
     scope               = "always"
     retries             = true
     evidence_submission = false
@@ -165,6 +174,9 @@ detail = {
   }
 }
 ```
+
+`path`, `name`, and `detail` are the only required top-level attributes. A
+control with no `evaluation` is deployable but evaluates nothing.
 
 ## file() pattern for rego/python content
 
@@ -247,132 +259,104 @@ Failed test cases surface as apply errors; successful runs stream `✓ occ_case_
 progress events to the CLI. Set `entity_type = "gate_control"` on the
 action to test a gate's rules instead of a control's.
 
-## fianu_policy — example
+## Cross-entity constraints the schema cannot catch
+
+These bind two entities together, so no single resource's plan-time validation
+sees them. Each one fails silently at evaluation time, not at apply time.
+
+**`fianu_policy` — the encoded policy must match the control's template.**
+`detail.variations[].policy` is a JSON-encoded string whose decoded shape MUST
+match the parent control's `policy_template.measures` tree. The provider does
+not validate the inner shape. Same constraint as the YAML path.
+
+**`fianu_index` — `expressions` entries are keyed by `source`.** Not
+`expression`. Note that gate check `matching` and policy variation `criteria`
+use `expression` for their inline CEL — the key differs by surface. See
+`writing-cel-expressions`.
+
+**`fianu_index` — `kind` differs by surface.** The Terraform example sets
+`kind = "write-ahead"`; the YAML/CLI public deploy endpoint forces
+user-authored indexes to `kind: write` (see `deploying-entities-yaml`). Mixing
+surfaces on one index produces a `kind` diff on import.
+
+**`fianu_gate` — a gate with no policy enforces nothing.** Author the policy
+inline via `detail.policy` (it deploys as a separate policy entity keyed to the
+gate) or as a standalone `fianu_policy`. Either way one must exist.
+
+## Migrating from provider 0.2.x — gate pods became `detail.gate`
+
+**Breaking in 0.3.0.** Fianu Console removed the `gate_check_rule` entity pod.
+Gate rules are now native to the gate entity, versioned with it and written in
+the same deploy call instead of through separate pod API round-trips.
+
+- `detail.pods[]` → `detail.gate.checks[]`. Each pod becomes one check, and the
+  pod's `key` becomes the check's `name`.
+- `detail.pod_keys` is removed from state entirely.
+- `detail.gate.enabled` is new — **the gate's master switch**.
+- `pods[].description` has no equivalent on a check. Drop it; it is not in the
+  CHANGELOG, so a migration that keeps it fails on an unknown attribute.
 
 ```hcl
-resource "fianu_policy" "iac_scan_strict" {
-  path = "f.policy.security.iac.strict"
-  name = "Strict IaC Scan Policy"
-
-  detail = {
-    type = "standard"   # or "exception"
-
-    control = {
-      path = "terraform.example.iac.scan"
-    }
-
-    variations = [
-      {
-        criteria = { asset = { type = "repository" } }
-        policy = jsonencode({
-          required        = true
-          vulnerabilities = {
-            critical = { maximum = 0 }
-            high     = { maximum = 0 }
-            medium   = { maximum = 5 }
-            low      = { maximum = 20 }
-          }
-        })
-      },
-    ]
-  }
+# 0.2.x — no longer accepted
+detail = {
+  pods = [{ key = "default", name = "Default enforcement", protection_level = "enforce", enabled = true }]
 }
-```
 
-`detail.variations[].policy` is a JSON-encoded string whose decoded shape
-MUST match the parent control's `policy_template.measures` tree. The
-provider does not validate the inner shape — mismatches silently fail at
-evaluation time. (Same constraint as the YAML path.)
-
-## fianu_gate — example
-
-Required inside `detail`: `environments` (≥1), `policy`, and `pods` (≥1).
-This mirrors the real `terraform.example.iac.scan` gate:
-
-```hcl
-resource "fianu_gate" "terraform_iac_scan" {
-  path = "f.gate.security.terraform.iac.scan"
-  name = "Terraform IaC Scan Gate"
-
-  detail = {
-    full_name   = "Terraform IaC Scan Gate"
-    display_key = "TFGS"
-    description = "…"
-
-    environments = [{ path = "env.prod" }]   # REQUIRED — ≥1 live environment
-
-    policy = {                               # REQUIRED — gate enforces nothing without it
-      variations = [                         # priority-ordered; each names required controls/gates
-        {                                    # tier 1 — explicit index
-          criteria          = { indexes = [{ path = fianu_index.terraform_prod_repos.path }] }
-          required_controls = ["terraform.example.iac.scan"]
-        },
-        {                                    # tier 2 — inline criteria (auto-creates an index)
-          criteria          = {
-            asset       = { type = "repository" }
-            expressions = [{ expression = "asset.uuid == '…0002'" }]
-          }
-          required_controls = ["terraform.example.iac.scan"]
-        },
-        { required_controls = ["terraform.example.iac.scan"] },   # tier 3 — catch-all
-      ]
-      override = { asset = { types = ["repository"] } }   # binds gate variations to asset type(s)
-    }
-
-    pods = [{                                # REQUIRED — ≥1 pipeline-automation rule
-      key              = "default"
-      name             = "Default enforcement"
-      protection_level = "enforce"           # enforce (block) | check (report only)
-      enabled          = true
-      matching = [                           # optional per-scope protection_level overrides
-        {
-          protection_level = "check"
-          asset            = { type = "repository" }
-          expressions      = [{ expression = "asset.uuid == '…0002'" }]
-        },
-        {
-          protection_level = "enforce"
-          indexes          = [{ path = fianu_index.terraform_prod_repos.path }]
-        },
-      ]
+# 0.3.x
+detail = {
+  gate = {
+    enabled = true                          # REQUIRED IN PRACTICE — see below
+    checks = [{
+      name             = "default"          # was the pod's `key`
+      protection_level = "enforce"          # enforce (block) | check (report only)
     }]
   }
 }
 ```
 
-Each gate variation must carry at least one of `required_controls` or
-`required_gates`. Because gates bind via `policy.override.asset.types`, gate
-variations may omit per-variation `asset` (unlike policy variations, which
-require `asset.type`). The server auto-fills the gate's evaluation logic and
-policy template via `applyGateDefaults`; HCL exposes identity, `config`,
-`environments`, `pods`, and the inline `policy` (which deploys as a separate
-`fianu_policy` keyed to the gate). For the gate to enforce anything, a policy
-must exist on it — inline (as above) or as a separate `fianu_policy`.
+`checks[].matching`, `protection_level`, and the per-scope override semantics
+carry over unchanged from `pods[]`. `gating_sources` and `completion_action`
+are new per-check fields — see `resources/gate.md`.
 
-## fianu_index — example
+## Edge cases
 
-```hcl
-resource "fianu_index" "terraform_prod_repos" {
-  path = "f.indexes.terraform.prod_repos.v3"
-  name = "Terraform IaC — Production Repos"
+### `detail.gate.enabled` omitted means OFF
 
-  detail = {
-    description = "Production repositories under the Terraform IaC scan policy."
-    asset_type  = "repository"          # REQUIRED — immutable (rename forces replacement)
-    kind        = "write-ahead"         # optional; the real example sets this
-    expressions = [                     # REQUIRED — note the key is `source`, not `expression`
-      { source = "asset.uuid == '…0001'" },
-    ]
-  }
-}
-```
+The gate-level `enabled` defaults to **off**, matching the server. A gate
+migrated from 0.2.x pods without setting it applies cleanly, plans clean, and
+silently never activates. This is the most likely migration failure and it
+produces no error.
 
-Required in `detail`: `asset_type` and `expressions` (each entry keyed by
-`source`). Indexes are referenced from policy / gate variations by `path` or
-`id`. The real Terraform example sets `kind = "write-ahead"`; note that the
-YAML/CLI public deploy endpoint instead forces user-authored indexes to
-`kind: write` (see `deploying-entities-yaml`) — if you mix surfaces, expect a
-`kind` diff on import.
+Note the inverted default one level down: `checks[].enabled` omitted means
+**enabled**, because a check only exists if someone authored it.
+
+### "Unexpected Identity Change" on first apply after import
+
+If you import an entity that was originally deployed via the CLI, the
+first apply may show every detail field as changed because the provider's
+canonical form differs from the CLI's normalization. Decide which format
+owns the entity going forward — don't mix.
+
+### Plan shows `(known after apply)` on every apply
+
+Expected. The provider does not pin `version.uuid` / `version.semantic` /
+`version.timestamp` via `UseStateForUnknown` because the server bumps them on
+every partial update; the resource is refetched post-deploy to populate from
+server truth.
+
+### Missing `audience` causes `access_denied: No audience parameter`
+
+Auth0 M2M clients whose tenant has no Default Audience set must have the
+provider's `audience` field configured (or `FIANU_AUDIENCE`). The default
+matches the production Fianu API audience — override only for private
+deployments.
+
+### `path` rename
+
+`path` is immutable. Changing it produces a `forces replacement` plan
+that destroys-then-creates. For non-disposable entities, deploy a new
+entity at the new path first, migrate referrers, then archive the old one
+manually.
 
 ## Wire contract
 
@@ -395,79 +379,46 @@ Resource Identity (Terraform 1.12+, framework 1.15+) is supported. The
 composite ID is `<entity_type>/<entity_key>`:
 
 ```bash
-terraform import fianu_control.sast    control/checkmarx.sast.vulnerabilities
-terraform import fianu_policy.strict   policy/f.policy.security.iac.strict
-terraform import fianu_gate.security   gate/f.gate.security
+terraform import fianu_control.sast     control/checkmarx.sast.vulnerabilities
+terraform import fianu_policy.strict    policy/f.policy.security.iac.strict
+terraform import fianu_gate.security    gate/f.gate.security
 terraform import fianu_index.prod_repos index/f.indexes.repos.prod
 ```
 
-Import blocks (`import { to = …; id = "…" }`) also work.
-
-## Edge cases
-
-### "Unexpected Identity Change" on first apply after import
-
-If you import an entity that was originally deployed via the CLI, the
-first apply may show every detail field as changed because the provider's
-canonical form differs from the CLI's normalization. Decide which format
-owns the entity going forward — don't mix.
-
-### Plan shows `(known after apply)` on every apply
-
-This is expected. The provider does not pin `version.uuid` /
-`version.semantic` / `version.timestamp` via `UseStateForUnknown` because
-the server bumps them on every partial update; the resource is refetched
-post-deploy to populate from server truth.
-
-### Missing `audience` causes `access_denied: No audience parameter`
-
-Auth0 M2M clients whose tenant has no Default Audience set must have the
-provider's `audience` field configured (or `FIANU_AUDIENCE`). The default
-matches the production Fianu API audience — override only for private
-deployments.
-
-### `path` rename
-
-`path` is immutable. Changing it produces a `forces replacement` plan
-that destroys-then-creates. For non-disposable entities, deploy a new
-entity at the new path first, migrate referrers, then archive the old one
-manually.
+Import blocks (`import { to = …; id = "…" }`) also work. Each resource's page
+carries its own `import.sh` example.
 
 ## Maintenance — keeping this skill accurate
 
-The Terraform surface is owned by the `terraform-provider-fianu` repo.
-When updating this skill, refresh from:
+`references/provider-docs/` is **vendored, not authored**. Re-sync it rather
+than hand-editing:
 
-| Source-of-truth file (in `../terraform-provider-fianu/`) | What it controls |
+```bash
+./scripts/sync-provider-docs.sh              # uses ../terraform-provider-fianu, or $FIANU_TF_PROVIDER_REPO
+./scripts/sync-provider-docs.sh --check      # fails if the vendored copy has drifted
+```
+
+The script fetches tags and reads docs from the newest release tag — **never
+from the working tree**. A local checkout sitting a release behind is the exact
+failure this guards against.
+
+After a re-sync, refresh this skill's prose against:
+
+| Source (in `../terraform-provider-fianu/`) | What it controls |
 |---|---|
-| `README.md` | Resource matrix, auth methods, the file() / action pattern, the import-id contract. |
-| `docs/resources/control.md` | Full `fianu_control` schema (regenerated from the provider — authoritative). |
-| `docs/resources/policy.md` | Full `fianu_policy` schema, including variations / criteria / override. |
-| `docs/resources/gate.md` | Full `fianu_gate` schema, including pods, environments, inline policy. |
-| `docs/resources/index.md` | Full `fianu_index` schema, asset-type taxonomy, CEL expression rules. |
-| `docs/actions/control_test.md` | `fianu_control_test` action schema. |
-| `internal/resources/<type>/` | Authoritative resource implementations — read when a schema field's runtime semantics aren't clear from the docs. |
-| `examples/resources/fianu_control/` | Provider-repo example controls — copy-paste starting points. |
-| `CHANGELOG.md` | Version-to-version surface changes (new resources, attribute renames, behaviour fixes). |
-
-The closest thing to a customer-grade, end-to-end working stack lives **outside**
-the provider repo, in `fianu-cloud`:
-
-| Real-world stack | What it grounds |
-|---|---|
-| `../fianu-cloud/environments/fianu-dev/controls/` | A live stack that pulls `fianulabs/fianu ~> 0.2.0` from the public registry and deploys a `fianu_control` + `fianu_policy` + `fianu_gate` + `fianu_index` for `terraform.example.iac.scan`. `versions.tf` / `providers.tf` show the real backend + env-var auth; `main.tf` shows the `locals` + `file()` + `action_trigger` wiring; `README.md` documents prerequisites and the apply flow. This is the canonical "what should the Terraform look like" reference. |
-
-The `docs/resources/*.md` files are auto-generated from the provider
-schema by `tfplugindocs` — they are the closest thing to a machine-readable
-contract for HCL authoring. Re-read them before changing this skill's
-example blocks. The provider schema changes more often than the CLI
-format does.
+| `CHANGELOG.md` | Breaking changes, new resources, attribute renames. Read this first — it is what tells you the prose above is stale. |
+| `README.md` | Auth methods, the file()/action pattern, migration notes. |
+| `internal/resources/<type>/` | Runtime semantics when a schema field's behavior isn't clear from its docs. |
 
 The wire contract (base64 → `X-Fianu-Raw-Content` → POST
 `/entities/artifacts/deploy`) lives in
 `../terraform-provider-fianu/internal/resources/base/` and the server
 counterpart in `../core/pkg/entities_files/handler.go`. Refresh only
 if the deploy endpoint or request shape changes.
+
+**Known-stale reference:** `../fianu-cloud/environments/fianu-dev/controls/`
+was this skill's end-to-end example stack, but it still pins `~> 0.2.0` and
+uses `detail.pods`. Do not copy from it until it is migrated to 0.3.x.
 
 ## See also
 
@@ -479,3 +430,4 @@ if the deploy endpoint or request shape changes.
 - `designing-policy-templates` — `policy_template.measures` syntax.
 - `placing-entities-in-hierarchy` — domain/collection selection for relations.
 - `working-with-evidence-plugins` — picking a plugin for subscription relations.
+- `using-fianu-api` — inspecting deployed entities over the API after apply.

@@ -1,6 +1,6 @@
 # Architecture
 
-`fianu-skills` ships 26 skills in 5 groups. Orchestrator skills (Group D) are the entry points an agent typically loads first; they declare their dependencies via `## Loads:` and the agent loads each one in turn.
+`fianu-skills` ships 27 skills in 5 groups. Orchestrator skills (Group D) are the entry points an agent typically loads first; they declare their dependencies via `## Loads:` and the agent loads each one in turn.
 
 ## Skill groups
 
@@ -11,10 +11,11 @@
 | `using-fianu-skills` | Bootstrap. Routes the agent to the right downstream skill based on user intent. Auto-loaded by the Claude Code SessionStart hook and Gemini CLI's `@`-import; Codex and Copilot CLIs discover it by frontmatter `description`. |
 | `using-fianu-best-practices` | Topical navigator over `references/FIANU.md` (the 905-line domain reference). Loaded whenever an agent needs to make a decision aligned with Fianu's domain model. |
 
-### Group B — Platform API (9)
+### Group B — Platform API (10)
 
 | Skill | Purpose |
 |---|---|
+| `using-fianu-api` | Canonical home for the `fianu api` CLI transport (auth resolution, `/api` prefixing, `-f`/`-F`/`--input`, `--paginate`, `--jq`, exit codes) and for `references/api-index.md` — a generated, grep-able index of all ~900 externally reachable routes with method, service, and required feature/role. The escape hatch when an investigation needs an endpoint no other skill documents. Regenerate with `scripts/gen-api-index.sh`. |
 | `working-with-tickets` | Canonical home for the Ticket/Condition/Activity data model, ticket endpoints, the bot identity convention, and the nested-approvers lookup gotcha. |
 | `working-with-entities` | Read/write controls, policies, exceptions, gates. Draft + approval-ticket flow. |
 | `working-with-attestations` | Read attestation results / history, the six-value result vocabulary, manual upload, and **reading a failing control's measured value / threshold / failed items off the raw note**. Owns the warning that `/meta` is policy-provenance only. |
@@ -42,7 +43,7 @@
 
 | Skill | Loads |
 |---|---|
-| `analyzing-tickets` | `working-with-tickets`, `working-with-entities`, `working-with-attestations`, `diffing-policies`, `using-fianu-best-practices` |
+| `analyzing-tickets` | `working-with-tickets`, `working-with-entities`, `working-with-attestations`, `diffing-policies`, `using-fianu-best-practices`, `using-fianu-api` |
 | `managing-ticket-approvals` | All of the above + `working-with-llm-context-rules` + `computing-decision-confidence` |
 | `converting-frameworks-to-controls` | `parsing-framework-documents`, `matching-existing-controls`, `working-with-evidence-plugins`, `writing-rego-rules`, `designing-policy-templates`, `placing-entities-in-hierarchy`, `working-with-entities`, `using-fianu-best-practices` |
 | `summarizing-evidence` | (none — atomic one-shot skill) |
@@ -53,7 +54,7 @@
 | Skill | Purpose |
 |---|---|
 | `deploying-entities-yaml` | On-disk YAML packages and the `fianu console plan/test/deploy` CLI. Canonical home for the controls/ + policies/ directory layout, `spec.yaml` / `contents.yaml` / `rule.rego` file matrix, and the multipart upload contract. |
-| `deploying-entities-terraform` | The `fianulabs/fianu` Terraform provider. Canonical home for `fianu_control` / `fianu_policy` / `fianu_gate` / `fianu_index` resource shapes, the `fianu_control_test` action, OIDC vs static-bearer auth, and the X-Fianu-Raw-Content wire format. |
+| `deploying-entities-terraform` | The `fianulabs/fianu` Terraform provider. Owns auth (OIDC / CLI-token / static bearer), the `file()` pattern, the `fianu_control_test` action, the X-Fianu-Raw-Content wire format, import IDs, cross-entity constraints, and the 0.2.x→0.3.x gate-pods migration. Resource **schemas** are not restated here — `references/provider-docs/` vendors the provider's own tfplugindocs-generated pages, synced from the newest release tag by `scripts/sync-provider-docs.sh`. |
 
 ## Composition model
 

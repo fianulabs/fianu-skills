@@ -2,6 +2,16 @@
 
 All Fianu API calls in this plugin share these conventions.
 
+## Prefer the CLI
+
+Where the `fianu` CLI is available, `fianu api <endpoint>` is the supported
+transport — it handles the token exchange, the mandatory `/api` prefix, JSON
+encoding, pagination, and exit codes. Load `using-fianu-api` for its contract
+and for the index of reachable routes.
+
+Everything below describes the **raw-HTTP fallback**, for environments where
+the CLI is not installed.
+
 ## Base URL
 
 The base URL is configured per environment by the harness and provided to the
