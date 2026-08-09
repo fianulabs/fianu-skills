@@ -14,9 +14,11 @@ right downstream skill.
 
 ## API conventions
 
-All skills in this plugin call the Fianu HTTP API. The conventions are
-documented once in `references/api-conventions.md`. Read it before making any
-API calls.
+All skills in this plugin call the Fianu HTTP API. The preferred transport is
+the `fianu api` CLI — load `using-fianu-api` for its flags, its auth
+resolution, and a grep-able index of every reachable route. The wire-level
+conventions for the raw-HTTP fallback are documented once in
+`references/api-conventions.md`.
 
 Key gotchas (load the canonical skill before acting on any of these):
 
@@ -32,6 +34,7 @@ Key gotchas (load the canonical skill before acting on any of these):
 
 | User intent | Load this skill |
 |---|---|
+| Any endpoint no skill below documents / ad-hoc API investigation / `fianu api` | `using-fianu-api` |
 | "Analyze this ticket" / fact-only ticket commentary | `analyzing-tickets` |
 | "Approve / deny this ticket" / autonomous workflow | `managing-ticket-approvals` |
 | Querying evidence at a commit / digest / release — picking the right series | `working-with-asset-series` |

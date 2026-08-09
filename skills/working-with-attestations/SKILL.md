@@ -5,6 +5,10 @@ description: "Use when reading Fianu attestation results or history, asking why 
 
 # Working with Attestations
 
+## Loads
+
+- `using-fianu-api` — for any endpoint this skill does not document
+
 ## Overview
 
 An **attestation** is the evidence note a control produces when it evaluates

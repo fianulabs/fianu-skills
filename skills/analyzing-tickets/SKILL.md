@@ -12,6 +12,7 @@ description: "Use when posting a factual analysis comment on a Fianu approval ti
 - `working-with-attestations`
 - `diffing-policies`
 - `using-fianu-best-practices`
+- `using-fianu-api` — for any endpoint the skills above do not document
 
 ## Overview
 
@@ -77,7 +78,8 @@ The diff feeds the **Changes** table in the output.
 
 ### 5. Fetch attestation history
 
-Via `working-with-attestations` (`GET /controls/:entity_key/attestations`).
+Via `working-with-attestations` (`GET /entities/:entity_id/attestations` — the
+param is the entity **id**, not the entity key).
 Last 10 attestations for the target entity. Present as counts only
 ("7 passing, 3 failing"), most recent date and result, and the trend.
 

@@ -1,6 +1,6 @@
 ---
 name: working-with-entities
-description: Use when fetching or creating Fianu entities — controls, policies, policy exceptions, gates — or reading their version history. Covers GET /controls/:key, /policies/:key, /gates/:key, /exceptions/:key, history endpoints, and POST /create/control / /create/policy.
+description: Use when fetching or creating Fianu entities — controls, policies, policy exceptions, gates — or reading their version history. Covers GET /controls/:key, /policies/:key, /gates/:key, /policy_exceptions/:key, history endpoints, and POST /create/control / /create/policy.
 ---
 
 # Working with Entities
@@ -36,7 +36,7 @@ See `using-fianu-best-practices` → FIANU.md §Controls / §Policies & Exceptio
 ```
 GET /controls/:entity_key
 GET /policies/:entity_key
-GET /exceptions/:entity_key
+GET /policy_exceptions/:entity_key
 GET /gates/:entity_key
 GET /controls/:entity_key/policies/history
 GET /controls/:entity_key/schemas?producer={pluginPath}
