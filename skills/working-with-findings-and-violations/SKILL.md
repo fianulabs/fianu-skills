@@ -29,8 +29,7 @@ For the attestation **result vocabulary** (`pass` / `fail` / `warn` /
 `working-with-attestations` — this skill does not restate them. For the JSON
 **summary output schema**, load `summarizing-evidence`.
 
-Response shapes below are grounded in the `../core` route handlers and the
-Fianu web client (`ui-fianu/src/functions/api.js`) — see `## Maintenance`.
+Response shapes below are verified against the backend route handlers.
 
 ## Findings vs violations — two independent pipelines
 
@@ -156,26 +155,6 @@ Two consequences matter most here:
 - **Excused violations** — a violation with an annotation is excused at
   roll-up. Result-vs-annotation logic lives in `working-with-attestations`;
   read both, never decide on `result` alone.
-
-## Maintenance — keeping this skill accurate
-
-Grounded in the `../core` Go handlers, **not** the web client — the client sends
-a `branch` param the violations route ignores, so do not re-ground this skill
-against `ui-fianu`.
-
-| Claim | Source |
-|---|---|
-| Violations / findings routes | `server/consulta/routes/evidence.go`, `server/consulta/routes/findings.go` |
-| `GET /evidence/assets/:asset/violations` requires `seriesId` → 400 | `external/db/evidence/args.go` (`SelectAssetViolationsArgs.IsValid`) |
-| Only non-empty `display.violations.rows`; controls only, gates excluded | `external/db/evidence/v1/violations.go` |
-| `Finding` fields, `omitempty` behavior, `matchKey` | `pkg/findings/types.go` |
-| Violations come from Rego, findings from schema extraction; correlation is opt-in | `pkg/rego/customfunctions.go` (`fianu.record_violation`), `pkg/findings/service.go`, `pkg/findings/correlate.go` |
-| `isViolation` set only for attestation UUIDs | `pkg/findings/service.go` (correlation guarded on `attestation != nil`) |
-| `severity` unenumerated, lowercased; `category` constants | `pkg/findings/extract.go`, `pkg/findings/types.go` |
-| Findings empty without `x-findings-*` annotations (e.g. SonarQube) | `../fianu-plugins/kodata/schemas/` |
-| `[]` not `null` | `pkg/queries/consulta/route.go` |
-
-Series mechanics are **not** maintained here — see `working-with-asset-series`.
 
 ## See also
 

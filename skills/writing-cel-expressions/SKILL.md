@@ -28,10 +28,9 @@ cast**:
 $asset.<field path>.(<type>)
 ```
 
-The cast is **not optional**. The backend's runtime CEL parser
-(`core/external/pkg/cel/cel.go::parseExpressionString`) requires it; without
-it the parser returns `errVarType` and the whole policy-evaluation pipeline
-returns 400 (this was the CORE-2747 "stored expression fails compile" bug).
+The cast is **not optional**. The backend's runtime CEL parser requires it;
+without it the parser returns `errVarType` and the whole policy-evaluation
+pipeline returns 400 ("stored expression fails compile").
 The Fianu UI authors the cast form and persists it verbatim.
 
 | Cast | For |
@@ -53,7 +52,7 @@ The Fianu UI authors the cast form and persists it verbatim.
 > un-cast shorthand (`asset.scm.repository == 'payments-app'`). The runtime
 > engine canonical form is the casted `$asset.…(type)` shape above. If you
 > author un-cast CEL through a deploy surface, verify it is normalized
-> server-side (see `## Maintenance`); when in doubt, write the cast form.
+> server-side; when in doubt, write the cast form.
 
 ## Operator vocabulary
 
@@ -111,19 +110,6 @@ shorthand or `expressions[].expression` — see `deploying-entities-yaml`.
    to embed it inline in a policy/gate, see `deploying-entities-yaml`.
 
 See `references/cel-cookbook.md` for worked examples.
-
-## Maintenance — keeping this skill accurate
-
-The dialect is grounded in the Fianu web client's CEL authoring path
-(`src/stores/entities/mappers/celCasts.js`,
-`src/modules/policyCriteriaNode/operatorLabels.js`). Confirm against the
-backend before release:
-
-| Source of truth | What it grounds |
-|---|---|
-| `../core/external/pkg/cel/cel.go::parseExpressionString` | The required cast grammar, accepted field forms (`$asset` only), and the `errVarType` failure mode. |
-| `../core/external/db/types/fianu/entities/policy.go::PolicyAssetGroup` | How a criterion's expressions are stored and validated. |
-| `../core/external/db/types/fianu/entities/indexes.go` | Index `expressions[].source` shape and `combineWith`. |
 
 ## See also
 

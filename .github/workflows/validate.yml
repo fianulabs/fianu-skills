@@ -1,0 +1,27 @@
+name: validate
+
+# This repo is public. Every change is linted for skill structure and for
+# internal references (validate-skills.sh), and scanned for secrets (gitleaks).
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks scans the commits a PR adds, not just the tip
+
+      - name: Validate skills + public-leak denylist
+        run: sh scripts/validate-skills.sh
+
+      - name: Secret scan
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.24.0 \
+            git /repo --redact --no-banner

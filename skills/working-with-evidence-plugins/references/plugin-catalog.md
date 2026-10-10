@@ -1,8 +1,7 @@
 # Plugin catalog
 
 The categories below map evidence-providing plugins to the controls they
-can satisfy. Maintained alongside `../../fianu-plugins` in the core
-monorepo; update when new plugins ship.
+can satisfy. Updated when new plugins ship.
 
 ## Categories and capabilities
 

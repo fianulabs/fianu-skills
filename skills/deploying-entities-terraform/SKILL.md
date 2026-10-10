@@ -66,8 +66,8 @@ is the opposite of every `detail` change, which does mint one.
 # versions.tf
 terraform {
   backend "s3" {                       # real stacks pin a remote state backend
-    bucket       = "fianu-terraform-state"
-    key          = "fianu-dev/controls/terraform.tfstate"
+    bucket       = "my-org-terraform-state"
+    key          = "fianu/controls/terraform.tfstate"
     region       = "us-east-1"
     use_lockfile = true
   }
@@ -387,38 +387,6 @@ terraform import fianu_index.prod_repos index/f.indexes.repos.prod
 
 Import blocks (`import { to = …; id = "…" }`) also work. Each resource's page
 carries its own `import.sh` example.
-
-## Maintenance — keeping this skill accurate
-
-`references/provider-docs/` is **vendored, not authored**. Re-sync it rather
-than hand-editing:
-
-```bash
-./scripts/sync-provider-docs.sh              # uses ../terraform-provider-fianu, or $FIANU_TF_PROVIDER_REPO
-./scripts/sync-provider-docs.sh --check      # fails if the vendored copy has drifted
-```
-
-The script fetches tags and reads docs from the newest release tag — **never
-from the working tree**. A local checkout sitting a release behind is the exact
-failure this guards against.
-
-After a re-sync, refresh this skill's prose against:
-
-| Source (in `../terraform-provider-fianu/`) | What it controls |
-|---|---|
-| `CHANGELOG.md` | Breaking changes, new resources, attribute renames. Read this first — it is what tells you the prose above is stale. |
-| `README.md` | Auth methods, the file()/action pattern, migration notes. |
-| `internal/resources/<type>/` | Runtime semantics when a schema field's behavior isn't clear from its docs. |
-
-The wire contract (base64 → `X-Fianu-Raw-Content` → POST
-`/entities/artifacts/deploy`) lives in
-`../terraform-provider-fianu/internal/resources/base/` and the server
-counterpart in `../core/pkg/entities_files/handler.go`. Refresh only
-if the deploy endpoint or request shape changes.
-
-**Known-stale reference:** `../fianu-cloud/environments/fianu-dev/controls/`
-was this skill's end-to-end example stack, but it still pins `~> 0.2.0` and
-uses `detail.pods`. Do not copy from it until it is migrated to 0.3.x.
 
 ## See also
 

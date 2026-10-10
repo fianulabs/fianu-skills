@@ -147,6 +147,30 @@ if [ -f "$MANIFEST" ]; then
     done
 fi
 
+# --- Check 6: public-repo leak denylist ---
+# This repo is public. Nothing in it may point at Fianu-internal repos, internal
+# roles, cloud accounts, cluster hostnames, or backend source files. Maintainer
+# provenance for these skills lives in the private fianulabs/skills repo.
+# Scans every tracked file except this script (which has to spell the patterns)
+# and the vendored provider docs (copied verbatim from the public provider repo;
+# fix leaks there, then re-sync).
+LEAKS='\.\./(core|fianu-cloud|controllers|entities-as-code|official-controls|fianu-plugins|documentation|controls|ui-fianu)\b'
+LEAKS="$LEAKS|role:internal|arn:aws:|svc\.cluster\.local|docs/superpowers|\bui-fianu/"
+LEAKS="$LEAKS|\bfianu-(dev|qa|prod|cloud)\b|\b(dictator|onboarder|fior)\b"
+LEAKS="$LEAKS|\b(pkg|external|server|cmd|internal)/[A-Za-z0-9_./-]*\.go\b"
+if git rev-parse --git-dir >/dev/null 2>&1; then
+    files="$(git ls-files | grep -vE '^scripts/validate-skills\.sh$|/references/provider-docs/')"
+else
+    files="$(find . -type f ! -path './.git/*' ! -path './scripts/validate-skills.sh' ! -path '*/references/provider-docs/*')"
+fi
+# shellcheck disable=SC2086 # tracked paths contain no whitespace
+leak_hits="$(printf '%s\n' $files | xargs grep -nIE -- "$LEAKS" 2>/dev/null || true)"
+if [ -n "$leak_hits" ]; then
+    echo "FAIL: internal references in the public repo:" >&2
+    printf '%s\n' "$leak_hits" >&2
+    FAIL=1
+fi
+
 if [ "$FAIL" -eq 0 ]; then
     echo "validate-skills: OK"
 fi

@@ -6,6 +6,14 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Removed maintainer-only "Maintenance" source tables and internal repo pointers from skill bodies. Customer-facing facts are unchanged.
+- `api-index.md` drops routes that require an internal Fianu role (117 rows) and the owning-service column. Columns are now `METHOD  PATH  DEST  AUTH`.
+
+### Added
+- `validate-skills.sh` fails on internal references (internal repos, roles, cloud accounts, backend source paths).
+- CI: `validate` workflow runs `validate-skills.sh` and a gitleaks secret scan on every PR.
+
 ## [v0.4.0] - 2026-07-30
 
 ### Added
@@ -15,7 +23,7 @@ to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - **`working-with-attestations`: removed "Prefer this over the per-policy fan-out" from `GET /notes/attestations/:uuid/meta`.** That endpoint returns policy provenance only — no `result`, no `detail`, no `display` — so the guidance sent agents to the one endpoint that cannot answer "what was the measured value", producing false "Fianu doesn't persist the measurement" conclusions. Now labelled explicitly, with the raw-note path documented alongside.
-- **Corrected the series catalog.** Prior values came from `../core` `external/db/series/constants.go`, which is dead code (only importer is a test) and disagrees with the seeded catalog. `tag` is a real series (2113, not absent); `release` is 2116 (not 2115); `timestamp` 2117 and `period_*` 2118–2122; `jira_issue` / `jira_fix_version` are not seeded at all.
+- **Corrected the series catalog.** Prior values came from an unused backend constants file that disagrees with the seeded catalog. `tag` is a real series (2113, not absent); `release` is 2116 (not 2115); `timestamp` 2117 and `period_*` 2118–2122; `jira_issue` / `jira_fix_version` are not seeded at all.
 - **Removed the invented `Unknown` / "not resolvable" result value** from `working-with-asset-series`, `working-with-attestations`, `working-with-findings-and-violations`, and the routing table. The real vocabulary is six values: `pass` / `warn` / `fail` / `in progress` / `not required` / `not found`.
 - **Corrected the "keyed on digest" model.** An attestation lands on exactly one series — the lowest-coded declared series the occurrence actually carries — and the evidence query matches on series *value*, never name or code. Declaring `[digest, uri, commit]` does not mean the attestation exists on all three. 19 prod controls share that binding, not 3.
 - **Corrected `associations` semantics.** A non-empty array widens the query; each entry then applies a conjunctive filter that *narrows*. Adding a second association shrinks results rather than unioning them.
@@ -25,7 +33,7 @@ to [Semantic Versioning](https://semver.org/).
 - **Dropped "every violation is a finding."** Violations and findings come from independent pipelines (Rego `record_violation` at evaluation vs. plugin schema extraction at read time), joined only by an opt-in `matchKey` correlation. Findings require `x-findings-*` schema annotations and return empty for plugins that lack them, including SonarQube.
 - `Finding` schema: added `matchKey`; documented that `isViolation` is `omitempty` (absent, never `false`) and only populated for attestation UUIDs; corrected the `source` example, which showed a shape the API cannot emit; downgraded `severity` from an enumerated set to an unvalidated lowercased pass-through (adds `info`).
 - Documented that `GET /evidence/assets/:asset/violations` excludes gate attestations, and that the snapshot endpoint silently defaults an omitted `seriesId` to the asset's latest commit while violations 400s.
-- Re-grounded every Maintenance table at the Go handlers, `fior` constants, and the seeded DB rather than `ui-fianu/src/functions/api.js`, which was the source of several of the errors above.
+- Re-grounded every claim at the backend handlers and the seeded DB rather than the web UI's API client, which was the source of several of the errors above.
 - **`GET /assets/:asset/attestations/export` takes `?commit=`, not `?seriesId=`** — the wrong param is silently ignored and returns an empty `attestations` array. Response is an object (`{summary, attestations[]}`), so paths are `$.attestations[].raw.*`. Documented that raw-snapshot reporting is commit-series only.
 - **Unknown series names *are* rejected at entity-deploy time** with `series[N]: unknown series name '<x>' - cannot resolve code` (400), on the path every prod spec uses. An earlier draft claimed nothing validates them.
 - **Series selection sorts on exact asset-type match first**, with `seriesCode` as the tiebreak — not code alone. Also noted that an occurrence carrying none of the declared series leaves the version unreduced.

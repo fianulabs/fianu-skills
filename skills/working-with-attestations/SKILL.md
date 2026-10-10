@@ -23,14 +23,12 @@ endpoints, the **manual upload** producer path, and the **result vocabulary**.
 It does NOT own the summary *output schema* (that is `summarizing-evidence`)
 or the gate-level roll-up (that is `working-with-release-gating`).
 
-Endpoints and payload shapes below are grounded in the `../core` handlers and
-`fior` constants — see `## Maintenance`. Where a claim is still
-client-observed it is marked inline.
+Endpoints and payload shapes below are verified against the backend handlers.
+Where a claim is still client-observed it is marked inline.
 
 ## Result vocabulary
 
-A control's verdict is one of **six values** — as declared in `fior`
-`constants` and mirrored in `../core` `external/pkg/occ-go/v1/variables/fianu.go`:
+A control's verdict is one of **six values**:
 
 | Result | Meaning |
 |---|---|
@@ -179,30 +177,6 @@ missing reference and skip; do not retry.
 When rolling results up (e.g. for a gate), a non-`pass` result with
 `annotations` > 0 is excused. Read both fields; never decide on `result`
 alone.
-
-## Maintenance — keeping this skill accurate
-
-Grounded in the `../core` handlers and `fior`, **not** the web client — the
-client's calls include parameters the backend ignores, so do not re-ground this
-skill against `ui-fianu/src/functions/api.js`.
-
-| Claim | Source |
-|---|---|
-| Six result values, exact spellings (spaces, not underscores); no `unknown` | `fior` `constants` + `external/pkg/occ-go/v1/variables/fianu.go` |
-| Execution `status` = `complete` \| `initiated` \| `error` | same |
-| `PolicyMeta` carries no `result` / `detail` / `display`; does carry `computedPolicy.sections` | `external/transport/http/policy_meta.go`, `pkg/evidence/policy_meta.go` |
-| Measured value written to the attestation's `detail` | `pkg/evaluation/evaluate.go` (`att.WithDetail`) |
-| `policy.evaluation.logs` populated from the Rego rule's `log()` calls | `pkg/evaluation/evaluate.go` + `fior` `policy/…/evaluation.go` |
-| `pretty` strips `display` to `{tag,color}` and drops `policy.evaluation` | `fior` `pretty/` mappers |
-| Raw-note JSON paths (`detail`, `display`, `policy`, `parent`) | `fior` `v3.0.0/note.go`, `display/…/violations.go`, `parent/…/parent.go` |
-| Attestation-history route is `/entities/:entity_id/attestations` | `server/consulta/routes/controls.go` + the proxy config mapping `/api/controls/…` |
-| Manual upload path params `:control_entity_key` / `:action`, payload shape | `pkg/upload/routes.go`, `pkg/upload/handler.go`, `external/transport/http/v1/notes.go` (`ManualEvidenceSubmission`) |
-| Threshold controls record no violation rows (convention, not enforced) | `../official-controls/envs/prod/controls/unit.test.coverage/**/rule.rego` |
-| `/agent/notes/attestations/:uuid/findings/:finding_id/summarize` | `server/agent/routes.go` |
-| Attestation / evaluation orchestration | `../controllers/` |
-
-There is no compile-time check that this skill matches backend state — grep
-the sibling repos when in doubt.
 
 ## See also
 
