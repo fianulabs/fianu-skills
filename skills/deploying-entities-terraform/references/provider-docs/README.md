@@ -23,8 +23,8 @@ Read the page for the resource you are authoring. Do not read them all.
 | `resources/instance.md` | `fianu_instance` resource schema. |
 | `resources/notification.md` | `fianu_notification` resource schema. |
 | `resources/platform.md` | `fianu_platform` resource schema. |
-| `resources/policy_exception.md` | `fianu_policy_exception` resource schema. |
 | `resources/policy.md` | `fianu_policy` resource schema. |
+| `resources/policy_exception.md` | `fianu_policy_exception` resource schema. |
 | `resources/report_template.md` | `fianu_report_template` resource schema. |
 | `resources/target.md` | `fianu_target` resource schema. |
 | `resources/tool.md` | `fianu_tool` resource schema. |
