@@ -2,7 +2,7 @@
 
 VENDORED — do not hand-edit. Re-sync with `./scripts/sync-provider-docs.sh`.
 
-Source: `fianulabs/terraform-provider-fianu` at `v0.4.0` (`8dd67b5`)
+Source: `fianulabs/terraform-provider-fianu` at `v0.6.0` (`4e92b62`)
 
 Generated upstream by `tfplugindocs` from the live provider schemas, so
 these pages are the authoritative HCL contract — including every nested
