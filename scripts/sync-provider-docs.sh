@@ -22,6 +22,8 @@
 # --check re-extracts to a temp dir and diffs; non-zero exit means the vendored
 # copy has drifted from the newest tag (or someone hand-edited it).
 set -euo pipefail
+# Byte order for globs and sort, so a Mac and a Linux runner write the same index.
+export LC_ALL=C
 
 CHECK=0
 if [ "${1:-}" = "--check" ]; then
