@@ -9,9 +9,28 @@
 #   5. Agent manifest: every skill named in manifests/agent-contexts.json resolves
 #      to an existing skills/<name>/SKILL.md.
 #
+#   6. Public-leak denylist over every tracked file.
+#
 # Exits non-zero on any violation.
+#
+#   sh scripts/validate-skills.sh --leaks FILE...   runs only the leak denylist,
+#                                                   over FILE (e.g. a PR body)
 
 set -eu
+
+# Internal references (check 6). Kept here so --leaks can use it alone.
+LEAKS='\.\./(core|fianu-cloud|controllers|entities-as-code|official-controls|fianu-plugins|documentation|controls|ui-fianu)\b'
+LEAKS="$LEAKS|role:internal|arn:aws:|svc\.cluster\.local|docs/superpowers|\bui-fianu/"
+LEAKS="$LEAKS|\bfianu-(dev|qa|prod|cloud)\b|\b(dictator|onboarder|fior)\b"
+LEAKS="$LEAKS|\b(pkg|external|server|cmd|internal)/[A-Za-z0-9_./-]*\.go\b"
+if [ "${1:-}" = "--leaks" ]; then
+    shift
+    if grep -nIE -- "$LEAKS" "$@"; then
+        echo "FAIL: internal references in $*" >&2
+        exit 1
+    fi
+    exit 0
+fi
 
 REPO_ROOT="$(cd -- "$(dirname -- "$0")/.." && pwd)"
 cd "$REPO_ROOT"
@@ -161,10 +180,6 @@ fi
 # Scans every tracked file except this script (which has to spell the patterns)
 # and the vendored provider docs (copied verbatim from the public provider repo;
 # fix leaks there, then re-sync).
-LEAKS='\.\./(core|fianu-cloud|controllers|entities-as-code|official-controls|fianu-plugins|documentation|controls|ui-fianu)\b'
-LEAKS="$LEAKS|role:internal|arn:aws:|svc\.cluster\.local|docs/superpowers|\bui-fianu/"
-LEAKS="$LEAKS|\bfianu-(dev|qa|prod|cloud)\b|\b(dictator|onboarder|fior)\b"
-LEAKS="$LEAKS|\b(pkg|external|server|cmd|internal)/[A-Za-z0-9_./-]*\.go\b"
 if git rev-parse --git-dir >/dev/null 2>&1; then
     files="$(git ls-files | grep -vE '^scripts/validate-skills\.sh$|/references/provider-docs/')"
 else
