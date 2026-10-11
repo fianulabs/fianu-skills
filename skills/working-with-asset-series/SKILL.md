@@ -194,7 +194,7 @@ ignored — the series predicate then binds an empty string and you get
 
 The response is an **object**, not an array:
 
-```jsonc
+```text
 { "summary": { … }, "attestations": [ { …, "raw": { … } } ] }
 ```
 

@@ -173,8 +173,8 @@ For each open ticket with no result:
 - Wait 2 seconds between tickets to avoid API overload.
 - If any ticket processing fails, log the error and continue to the next ticket.
 
-Follow cursor pagination (see `using-fianu-skills/references/api-conventions.md`)
-when iterating over more tickets than fit in one page.
+Follow cursor pagination, as the using-fianu-skills skill describes, when
+iterating over more tickets than fit in one page.
 
 ## Edge cases
 

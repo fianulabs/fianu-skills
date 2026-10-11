@@ -9,10 +9,10 @@ description: Use when fetching or creating Fianu entities — controls, policies
 
 Fianu entities are versioned, access-controlled configuration items. This
 skill is the canonical home for the HTTP contract that reads and writes
-them: controls, policies, policy exceptions, and gates. Every create/update
-goes through an approval ticket — entities do not move to `published` state
-on POST; they enter as drafts and the platform opens an approval ticket
-which a human (or `managing-ticket-approvals`) acts on.
+them: controls, policies, policy exceptions, and gates. `POST /create/<type>`
+saves the entity directly. `POST /request/<type>` (control, gate, policy,
+policy_exception) saves a draft and opens an approval ticket that a human,
+or `managing-ticket-approvals`, acts on.
 
 Load this skill when an agent needs to fetch entity data, look up version
 history, discover an evidence schema, or kick off a create.
@@ -24,10 +24,18 @@ For design rules (control naming, scope selection, template syntax), load
 
 | Type | Parent | Lifecycle states | Notes |
 |---|---|---|---|
-| `control` | one or many `collections` | `draft` → `active` → `published` (or `deprecated`) | Subscribes to event sources; OPA Rego rule produces attestations. |
-| `policy` | one `control` | same lifecycle | Sets threshold values; layered per asset hierarchy. |
-| `policy_exception` | one `policy` | same lifecycle + `expiresAt` | Temporary easing of a policy; carries an expiration. |
-| `gate` | none directly; references controls + indexes | same lifecycle | Enforcement boundary; pass/fail gates production transitions. |
+| `control` | one or many `collections` | `status × state (below)` | Subscribes to event sources; OPA Rego rule produces attestations. |
+| `policy` | one `control` | `status × state (below)` | Sets threshold values; layered per asset hierarchy. |
+| `policy_exception` | one `policy` | `status × state (below)` + `expiresAt` | Temporary easing of a policy; carries an expiration. |
+| `gate` | none directly; references controls + indexes | `status × state (below)` | Enforcement boundary; pass/fail gates production transitions. |
+
+Lifecycle has two axes:
+<!-- facts:entity-lifecycle -->
+| Axis | Values |
+| --- | --- |
+| `status` | `draft`, `staging`, `active`, `inactive`, `archived` |
+| `state` | `draft`, `published`, `staging`, `rejected` |
+<!-- /facts:entity-lifecycle -->
 
 See `using-fianu-best-practices` → FIANU.md §Controls / §Policies & Exceptions / §Gates for design rules.
 
@@ -74,25 +82,32 @@ Returns the field paths and types available in the plugin's evidence output.
 Used by `writing-rego-rules` to map evidence onto `input.detail.*` paths.
 See `working-with-evidence-plugins` for plugin selection.
 
-## Write endpoints (drafts + approval tickets)
+## Write endpoints
 
 ```
-POST /create/control      → creates draft + opens approval ticket
-POST /create/policy       → creates draft + opens approval ticket
+POST /create/control            → saves the entity directly
+POST /create/policy             → saves the entity directly
+POST /create/policy_exception   → saves the entity directly
+POST /request/control           → saves a draft + opens an approval ticket
+POST /request/policy            → saves a draft + opens an approval ticket
+POST /request/policy_exception  → saves a draft + opens an approval ticket
+POST /request/gate              → saves a draft + opens an approval ticket
 ```
 
-The draft-then-ticket flow:
+Two distinct routes per type, not one:
 
-1. POST creates the entity in `draft` state.
-2. The platform automatically opens an approval ticket targeting the new
-   entity (the ticket's `targetEntityType` will be `control`, `policy`,
-   `policy_exception`, or `gate`).
-3. The entity is NOT `published` until a human (or agent via
-   `managing-ticket-approvals`) approves the ticket.
+- `POST /create/<type>` persists the entity immediately. No approval ticket.
+  (`gate` has no `/create` route — every gate goes through `/request/gate`.)
+- `POST /request/<type>` creates the entity in `draft` state and the
+  platform automatically opens an approval ticket targeting it (the
+  ticket's `targetEntityType` is `control`, `policy`, `policy_exception`,
+  or `gate`). The entity is NOT `published` until a human (or agent via
+  `managing-ticket-approvals`) approves the ticket.
 
 Skills MUST NOT assume an entity is queryable as `published` immediately
-after a POST. If a downstream operation requires the published state, wait
-for the approval ticket to close with `result == "approved"`.
+after a `/request/<type>` POST. If a downstream operation requires the
+published state, wait for the approval ticket to close with
+`result == "approved"`.
 
 ## Version semantics
 

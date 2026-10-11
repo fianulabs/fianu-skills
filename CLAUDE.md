@@ -8,10 +8,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repo layout
 
-- `skills/` — the canonical skill library (24 skills, 5 groups). See `docs/architecture.md` for the full inventory.
+- `skills/` — the canonical skill library. See `docs/architecture.md` for the full inventory.
 - `.claude-plugin/` / `.codex-plugin/` / `gemini-extension.json` / `plugin.json` (root, Copilot) — per-harness plugin manifests.
 - `hooks/` — Claude Code SessionStart hook that bootstraps `using-fianu-skills`.
-- `scripts/` — `bump-version.sh` (lockstep version updates), `validate-skills.sh` (frontmatter + canary-string + public-leak lint), and `sync-provider-docs.sh`.
+- `scripts/` — `bump-version.sh` (lockstep version updates), `validate-skills.sh` (frontmatter + canary-string + public-leak lint), `sync-provider-docs.sh`, `build-bundles.py` (agent prompt bundles), `render-facts.py` (generated facts regions), `check-code-blocks.py` (every code block runs).
+- `facts/facts.json` — generated platform facts (enums, Rego builtins, plugin schemas).
+- `manifests/agent-contexts.json` — which skills each Fianu agent entry point loads.
 - `docs/architecture.md` and `docs/authoring-skills.md` — design docs for contributors.
 
 ## Working on skills
@@ -30,7 +32,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Validation
 
-`scripts/validate-skills.sh` checks frontmatter (name matches directory, description present) and canary-string locations. Run it before every commit; CI will run it on every PR once configured.
+`.github/workflows/validate.yml` runs on every PR. Run the same checks locally before committing:
+
+```bash
+sh scripts/validate-skills.sh            # frontmatter, canaries, manifest, public-leak denylist
+python3 scripts/build-bundles.py --check # every pointer resolves inside its bundle
+python3 scripts/render-facts.py --check  # facts regions match facts/facts.json
+python3 scripts/check-code-blocks.py     # every rego/json/yaml block parses (needs opa)
+```
+
+## Bundles
+
+The in-cluster agent cannot open files, so `scripts/build-bundles.py` resolves every pointer ahead of time. A bundle is every SKILL.md body `manifests/agent-contexts.json` lists for an entry point, frontmatter stripped, in manifest order, then every file those bodies point at, inlined once each. Pointers it recognises:
+
+```
+references/<file>.md               a file in the same skill's references/
+<skill>/references/<file>.md       a file in another skill's references/
+`<skill>` -> <file>.md             the same, in prose (the arrow is -> or U+2192)
+<file>.md §<A> > <B> / §<C>        every section named must be a heading in <file>
+```
+
+A pointer dangles when its file is missing, its skill is not in the same entry point, or a section it names is not a heading.
 
 ## This repo is public
 
@@ -40,13 +62,18 @@ cluster hostnames, or backend source paths. Maintainer-only grounding (which
 backend file proves which claim) lives in the private `fianulabs/skills` repo's
 `PROVENANCE.md` — never add a "Maintenance" or "source of truth" section here.
 
+Fianu engineers work on this repo as the `public/` submodule of `fianulabs/skills`,
+which pins it, runs control evals against it, and publishes it. Never hand-type a
+value the platform can enumerate; it belongs in a `<!-- facts:... -->` region.
+
 ## Generated & vendored content
 
-Two reference sets are derived from other repos and must never be hand-edited:
+These are derived from other sources and must never be hand-edited:
 
 | Path | Produced by | Source of truth |
 |---|---|---|
 | `skills/using-fianu-api/references/api-index.md` | Fianu-internal tooling (private repo) | The API gateway config |
+| `facts/facts.json` | Fianu-internal tooling (private repo) | The platform source; render with `python3 scripts/render-facts.py` |
 | `skills/deploying-entities-terraform/references/provider-docs/` | `scripts/sync-provider-docs.sh` | [`fianulabs/terraform-provider-fianu`](https://github.com/fianulabs/terraform-provider-fianu) at its **newest release tag** (the script fetches tags; it does not read the working tree) |
 
 Run `./scripts/sync-provider-docs.sh` (or `--check` to detect drift) before

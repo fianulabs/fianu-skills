@@ -1,7 +1,10 @@
 name: validate
 
 # This repo is public. Every change is linted for skill structure and for
-# internal references (validate-skills.sh), and scanned for secrets (gitleaks).
+# internal references (validate-skills.sh), checked for dangling bundle
+# pointers, stale facts and broken code blocks, and scanned for secrets.
+# Control evals need Fianu credentials, so they run in the private
+# fianulabs/skills repo on the PR that bumps its pin of this repo.
 on:
   pull_request:
   push:
@@ -14,12 +17,35 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0 # gitleaks scans the commits a PR adds, not just the tip
+          persist-credentials: false
 
       - name: Validate skills + public-leak denylist
-        run: sh scripts/validate-skills.sh
+        run: |
+          sh scripts/validate-skills.sh
+          python3 -m unittest scripts/test_validate_skills.py
+
+      - name: Every pointer resolves inside its bundle
+        run: |
+          python3 -m unittest scripts/test_build_bundles.py
+          python3 scripts/build-bundles.py --check
+
+      - name: Facts regions match facts/facts.json
+        run: |
+          python3 -m unittest scripts/test_render_facts.py
+          python3 scripts/render-facts.py --check
+
+      - uses: open-policy-agent/setup-opa@b2b258e089860efaadaaf71bf6e3aecb4a3eeff1 # v2.4.0
+        with:
+          version: 1.14.0 # the platform's OPA version
+
+      - name: Every code block runs
+        run: |
+          pip install pyyaml
+          python3 -m unittest scripts/test_check_code_blocks.py
+          python3 scripts/check-code-blocks.py
 
       - name: Secret scan
         run: |

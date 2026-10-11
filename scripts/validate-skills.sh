@@ -105,8 +105,15 @@ echo "$CANARIES" | while IFS="$TAB" read -r canary owner; do
     for d in $skill_dirs; do
         s="$d/SKILL.md"
         [ -f "$s" ] || continue
-        # Body = everything after the second `---` line.
-        body="$(awk 'NR>1 && /^---$/ {found=1; next} found' "$s")"
+        # Body = everything after the second `---` line, with generated
+        # facts regions stripped first — a region can legitimately list a
+        # canonical-home term (e.g. a Rego builtin) without restating it.
+        # One non-greedy, name-matched strip: a greedy `.*` would delete
+        # everything between two regions sharing a line (prose included),
+        # and an unmatched opening marker could never pair up to delete past
+        # it, so nothing after it would be hidden either.
+        body="$(awk 'NR>1 && /^---$/ {found=1; next} found' "$s" \
+            | perl -0pe 's/<!-- facts:([a-z0-9-]+) -->.*?<!-- \/facts:\1 -->//gs')"
         if printf '%s' "$body" | grep -qF -- "$canary"; then
             hits="$hits $s"
         fi

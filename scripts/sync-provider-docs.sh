@@ -33,7 +33,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PROVIDER="${1:-${FIANU_TF_PROVIDER_REPO:-$REPO_ROOT/../terraform-provider-fianu}}"
 SHIPPED="$REPO_ROOT/skills/deploying-entities-terraform/references/provider-docs"
 
-if [ ! -d "$PROVIDER/.git" ]; then
+if [ ! -e "$PROVIDER/.git" ]; then
     echo "FAIL: provider repo not found at $PROVIDER" >&2
     echo "      pass the repo path as \$1 or set FIANU_TF_PROVIDER_REPO" >&2
     exit 1

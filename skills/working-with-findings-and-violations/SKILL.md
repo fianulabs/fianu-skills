@@ -83,7 +83,7 @@ GET /notes/:uuid?format=raw
 
 `GET /notes/:uuid/findings` returns normalized findings:
 
-```jsonc
+```text
 {
   "id": "CVE-2023-1234",
   "title": "…",

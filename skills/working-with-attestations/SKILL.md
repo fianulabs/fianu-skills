@@ -136,7 +136,7 @@ POST /internal/upload/:control_entity_key/attestations/:action     (multipart/fo
 `:action` is `manual` for this flow. The multipart body carries a `payload`
 part (JSON) plus one part per evidence file (appended by filename):
 
-```json
+```jsonc
 {
   "attestation": { "result": "pass" },               // any result value above
   "series":      { "commit": "<commit sha>" },        // the series point covered
@@ -186,4 +186,4 @@ alone.
 - `working-with-release-gating` — how attestations roll up into a gate decision and a release status.
 - `working-with-entities` — controls (which produce attestations) and their read/write contract.
 - `working-with-evidence-plugins` — the plugins that emit automated attestations.
-- `using-fianu-best-practices` → FIANU.md §Controls / §Attestations — the domain semantics.
+- `using-fianu-best-practices` → FIANU.md §Controls — the domain semantics.

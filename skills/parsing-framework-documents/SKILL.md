@@ -41,7 +41,7 @@ ambiguity in the output and ask a human to confirm before proceeding.
 
 Each row becomes:
 
-```json
+```jsonc
 {
   "id": "CC-7.1",
   "title": "Change Management Controls",

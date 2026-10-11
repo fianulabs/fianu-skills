@@ -71,7 +71,7 @@ resource "fianu_policy" "iac_scan_strict" {
 Required:
 
 - `control` (Attributes) Reference to the control this policy applies. The control's evaluation logic runs against the assets in scope. (see [below for nested schema](#nestedatt--detail--control))
-- `type` (String) Policy type. One of `standard`, `exception`, `target`.
+- `type` (String) Policy type. One of `standard`, `target`. For `exception`, use the `fianu_policy_exception` resource — exceptions are stored and read as a separate entity type.
 - `variations` (Attributes List) Policy variations. Each variation pairs an effect (apply or exempt) with metric overrides for the target control. Server evaluates variations in priority order; the first matching variation wins. (see [below for nested schema](#nestedatt--detail--variations))
 
 <a id="nestedatt--detail--control"></a>
