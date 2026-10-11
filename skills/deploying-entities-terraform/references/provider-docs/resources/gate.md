@@ -81,6 +81,7 @@ Required:
 
 Optional:
 
+- `approvals` (Attributes) Approval rules: who must approve requests this entity governs, or when they approve automatically. Rules are evaluated in order and the first match wins. Leave unset to keep the rules managed in the Console; set `rules = []` to clear them. (see [below for nested schema](#nestedatt--detail--approvals))
 - `config` (Attributes) Operational configuration — scope of evaluation, retry behavior, evidence/attestation flags. (see [below for nested schema](#nestedatt--detail--config))
 - `description` (String) Free-form description of what the gate enforces.
 - `environments` (Attributes List) Environment entities this gate binds to. Maps to the `environments` edge on the gate entity — server materialises these as `parent=environment, child=gate` entity_edges rows. Gate-only field (controls don't bind to environments). (see [below for nested schema](#nestedatt--detail--environments))
@@ -90,6 +91,80 @@ Optional:
 Read-Only:
 
 - `policy_uuid` (String) Computed UUID of the deployed policy entity (when `policy` is set). Tracked in state so Delete can archive the policy by UUID.
+
+<a id="nestedatt--detail--approvals"></a>
+### Nested Schema for `detail.approvals`
+
+Required:
+
+- `rules` (Attributes List) Ordered rules; the first match wins. (see [below for nested schema](#nestedatt--detail--approvals--rules))
+
+<a id="nestedatt--detail--approvals--rules"></a>
+### Nested Schema for `detail.approvals.rules`
+
+Required:
+
+- `action` (Attributes) What a matching rule does. (see [below for nested schema](#nestedatt--detail--approvals--rules--action))
+- `id` (String) Stable slug, unique within the block.
+
+Optional:
+
+- `criteria` (Attributes) CEL over `$request`, `$history`, `$series`, `$evidence`, `$subject`, `$target`, `$requester`; unset means always. (see [below for nested schema](#nestedatt--detail--approvals--rules--criteria))
+- `description` (String) Description.
+- `enabled` (Boolean) A disabled rule is kept but skipped. Defaults to `true`.
+- `enforced` (Boolean) Evaluated before every ordinary rule, farthest governor first, so a domain or collection floor beats a control's auto-approve.
+- `history` (Attributes) What counts as the same finding for `$history.occurrence`. (see [below for nested schema](#nestedatt--detail--approvals--rules--history))
+- `name` (String) Display name.
+- `subject_types` (List of String) Request kinds the rule applies to; unset means every kind.
+
+<a id="nestedatt--detail--approvals--rules--action"></a>
+### Nested Schema for `detail.approvals.rules.action`
+
+Required:
+
+- `type` (String) `require` or `auto_approve`.
+
+Optional:
+
+- `distinct` (Boolean) Each requirement must be met by a different person.
+- `requirements` (Attributes List) One approval condition each (`require` only). (see [below for nested schema](#nestedatt--detail--approvals--rules--action--requirements))
+
+<a id="nestedatt--detail--approvals--rules--action--requirements"></a>
+### Nested Schema for `detail.approvals.rules.action.requirements`
+
+Required:
+
+- `approvers` (List of String) `user:<sub>`, `role:<relation>`, `role:<relation>@<anchor>` or `role:<relation>@each:<anchor>`; an anchor is `control`, `collection`, `domain`, `subject` or an asset type path.
+- `count` (Number) Approvals needed.
+- `label` (String) Condition label.
+
+
+
+<a id="nestedatt--detail--approvals--rules--criteria"></a>
+### Nested Schema for `detail.approvals.rules.criteria`
+
+Required:
+
+- `expressions` (List of String) CEL expressions, e.g. `$history.occurrence >= 3`.
+
+Optional:
+
+- `combine_with` (String) `AND` (default) or `OR`.
+
+
+<a id="nestedatt--detail--approvals--rules--history"></a>
+### Nested Schema for `detail.approvals.rules.history`
+
+Optional:
+
+- `count` (String) `submitted` (default) counts every earlier request; `approved` only approved ones.
+- `key` (String) Line-item field identifying a finding, e.g. `alert_id`. Unset when the measure is a list of strings (e.g. CVE ids).
+- `max_assets` (Number) With scope `asset`, the most assets a request may cover and still count per asset (default 10, at most 100). A wider request does not match a per-asset auto-approve, so a later rule (e.g. the owner) applies, and it never counts toward its assets' history.
+- `measure` (String) List measure holding the line items, e.g. `vulnerabilities.alerts`. Required with scope `control`; with scope `asset`, unset counts every request covering the asset.
+- `scope` (String) `control` (default) counts a finding across every asset; `asset` counts per asset the request covers, so the first exception on each asset is occurrence 1. Scope `asset` needs `subject_types` of `exception` and/or `policy`.
+
+
+
 
 <a id="nestedatt--detail--config"></a>
 ### Nested Schema for `detail.config`
