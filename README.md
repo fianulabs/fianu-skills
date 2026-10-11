@@ -37,11 +37,12 @@ copilot plugin install fianulabs/fianu-skills
 
 ## What's inside
 
-17 skills organized in four groups:
+27 skills organized in five groups:
 
-- **Meta** — `using-fianu-skills`, `using-fianu-best-practices`
-- **Platform API** — `working-with-tickets`, `working-with-entities`, `working-with-llm-context-rules`, `working-with-evidence-plugins`
-- **Logic primitives** — `diffing-policies`, `computing-decision-confidence`, `writing-rego-rules`, `designing-policy-templates`, `placing-entities-in-hierarchy`, `matching-existing-controls`, `parsing-framework-documents`
+- **Meta** — `using-fianu-skills`, `using-fianu-best-practices`, `using-fianu-api`
+- **Platform API** — `working-with-tickets`, `working-with-entities`, `working-with-llm-context-rules`, `working-with-evidence-plugins`, `working-with-asset-series`, `working-with-attestations`, `working-with-findings-and-violations`, `working-with-indexes`, `working-with-release-gating`
+- **Logic primitives** — `diffing-policies`, `computing-decision-confidence`, `writing-rego-rules`, `writing-cel-expressions`, `designing-policy-templates`, `placing-entities-in-hierarchy`, `matching-existing-controls`, `parsing-framework-documents`
+- **Entities as code** — `deploying-entities-as-code`, `deploying-entities-yaml`, `deploying-entities-terraform`
 - **Entry-point orchestrators** — `analyzing-tickets`, `managing-ticket-approvals`, `converting-frameworks-to-controls`, `summarizing-evidence`
 
 See `docs/architecture.md` for how they compose.

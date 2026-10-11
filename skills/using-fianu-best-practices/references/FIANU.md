@@ -305,14 +305,14 @@ For example, a control called "Container Scan" may evaluate the number of critic
 
 ```yaml
 vulnerabilities:
-	critical:
-		maximum: 0
-	high:
-		maximum: 0
-	medium:
-		maximum: 0
-	low:
-		maximum: 0
+  critical:
+    maximum: 0
+  high:
+    maximum: 0
+  medium:
+    maximum: 0
+  low:
+    maximum: 0
 ```
 
 **Evaluation**
@@ -342,20 +342,28 @@ On the other hand, separating measurements may be appropriate. For example, let'
 
 ```yaml
 scores:
-	reliability:
-		minimum: A
-	maintainability:
-		minimum: B
+  reliability:
+    minimum: A
+  maintainability:
+    minimum: B
 ```
 
 **Evaluation**
 
 ```rego
+package rule
+
+import rego.v1
+
+default pass := false
+
+# SonarQube ratings are numeric strings "1.0" (A, best) to "5.0" (E); rank
+# maps the policy's letter grade to the same scale for comparison.
+rank := {"A": 1, "B": 2, "C": 3, "D": 4, "E": 5}
+
 pass if {
-	policy := data.scores
-	
-	input.detail.measures.reliability     >= policy.reliability
-	input.detail.measures.maintainability >= policy.maintainability
+	to_number(input.detail.measures.reliability.reliability_rating) <= rank[data.scores.reliability.minimum]
+	to_number(input.detail.measures.maintainability.sqale_rating) <= rank[data.scores.maintainability.minimum]
 }
 ```
 
@@ -390,10 +398,10 @@ This policy is the most user-friendly template. It's self-evident to users that 
 
 ```yaml
 vulnerabilities:
-	critical:
-		maximum: 0
-	high:
-		maximum: 0
+  critical:
+    maximum: 0
+  high:
+    maximum: 0
 ```
 
 **Example 2**
@@ -402,9 +410,9 @@ This policy template is slightly less user friendly. It is terse and does commun
 
 ```yaml
 critical:
-	max: 0
-high
-	max: 0
+  max: 0
+high:
+  max: 0
 ```
 
 **Example 3**
@@ -572,28 +580,28 @@ Consider the following example that uses policies for a control called "Code Cov
 
 ```yaml
 coverage:
-	overall:
-		minimum: 0.5
-	new:
-		minimum: 0.85
+  overall:
+    minimum: 0.5
+  new:
+    minimum: 0.85
 ```
 
 **Policy B** is set at the "Repository" level, a fixed asset that is one degree lower on the asset hierarchy than abstract asset level 1. It creates higher threshold for overall coverage, requiring that at least 80% of the codebase must be covered by unit tests. Without an index to refine the population of assets that must comply with this policy, Policy B would *also* apply to every codebase in the organization.
 
 ```yaml
 coverage:
-	overall:
-		minimum: 0.8
+  overall:
+    minimum: 0.8
 ```
 
 **Computed Policy**
 
 ```yaml
 coverage:
-	overall:
-		minimum: 0.8
-	new:
-		minimum: 0.85
+  overall:
+    minimum: 0.8
+  new:
+    minimum: 0.85
 ```
 
 The final policy applied to each repository would reflect that Policy B overrides Policy A, wherever Policy B is defined. So Policy B takes precedent over Policy A for overall coverage minimum (80%) but because Policy B does not define a new coverage minimum, the computed policy uses Policy A's new coverage of 85%.
@@ -618,10 +626,10 @@ Building upon part 1 of this example, let's incorporate asset indexes and variat
 index: 'asset.cmdb.custom == true'
 
 coverage:
-	overall:
-		minimum: 0.5
-	new:
-		minimum: 0.85
+  overall:
+    minimum: 0.5
+  new:
+    minimum: 0.85
 ```
 
 **Policy B** is still set at the "Repository" level, one degree lower on the asset hierarchy, and therefore the dominant policy. Hower, policy B has two variations. *Variation 1* uses the index `asset.cmdb.internet_facing`, which signifies that the repository deploys to a production environment with exposure to the public-facing internet. Assets that are considered internet facing typically pose a greater risk to the organization, therefore the IT Risk Management team would like to elevate the requirements for code coverage. *Variation 2* uses an index on `asset.framework` and looks for repositories that use `angular` or`react`. These are web UI frameworks and IT Risk Management has strict UI functional test requirements, so they would like to lower the unit test code coverage threshold for UI repositories because they believe it's redundant.

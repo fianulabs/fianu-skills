@@ -16,7 +16,7 @@ Fianu entities can be authored and deployed from a source repository in two
 formats: on-disk YAML packages driven by `fianu console deploy`, or Terraform
 HCL driven by the `fianulabs/fianu` provider. Both paths POST to the same
 server endpoint (`/entities/artifacts/deploy`) and run through the same
-`pkg/entities_files/control_deployer.go` code on the server, so they produce
+server-side deployer, so they produce
 identical `Control` / `Policy` / `Gate` rows and honour the same SHA256
 content-hash idempotency gate.
 
@@ -45,7 +45,7 @@ flow. The difference is only in how the bytes get to the server.
 | `policy` | ✅ | ✅ `fianu_policy` | Full parity. |
 | `policy_exception` | ✅ (exception template) | ✅ via `fianu_policy` with `type = "exception"` | Same wire shape; CLI and provider treat exception as a policy subtype. |
 | `gate` | ✅ (`type: "gate"`) | ✅ `fianu_gate` | Full parity. Inline policy + pods; the CLI auto-detects the type from the file's root `type` field. |
-| `index` | ✅ (`type: "index"`) | ✅ `fianu_index` | Reusable CEL asset-scope. The CLI deploy requires the console server's index translator (wired at `server/console/routes.go`); against a server without it, an index deploy returns `deployer not registered for type index`. |
+| `index` | ✅ (`type: "index"`) | ✅ `fianu_index` | Reusable CEL asset-scope. The CLI deploy requires a server with the index deployer registered; against a server without it, an index deploy returns `deployer not registered for type index`. |
 | `environment` | ❌ | ⏳ v0.1.x `fianu_environment` | Neither path stable yet. |
 | `target` | ❌ | ⏳ v0.1.x `fianu_target` | Neither path stable yet. |
 | `collection` | ❌ | ⏳ v0.1.x `fianu_collection` | Neither path stable yet. |
@@ -170,15 +170,6 @@ If a control was originally deployed via the CLI and someone subsequently
 imports it into Terraform (`terraform import fianu_control.x control/<key>`),
 the next `terraform apply` will rewrite the entity from HCL. Pick one
 format per entity and stick with it.
-
-### Cross-repo source-of-truth changes
-
-This skill's accuracy depends on the real working repos not drifting from
-the skill content: `../entities-as-code/` (YAML policies/exceptions),
-`../official-controls/` (YAML control packages), and
-`../fianu-cloud/environments/fianu-dev/controls/` + `../terraform-provider-fianu/`
-(Terraform). See the **Maintenance** section in each sub-skill for the files
-to refresh when updating.
 
 ## See also
 

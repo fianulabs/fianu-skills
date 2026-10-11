@@ -20,7 +20,7 @@ blocked / what does this gate require at this commit." For the attestation
 result vocabulary it rolls up, see `working-with-attestations`.
 
 Decision semantics below are **client-observed** — the authoritative pass/fail
-logic lives in the backend; see `## Maintenance`.
+logic lives in the backend.
 
 ## Gate evaluation (runtime)
 
@@ -103,19 +103,6 @@ data, not the asset's actual pass/fail. Always pass the commit you mean.
 ### Annotation overrides
 A failing control excused by an annotation passes the gate. Reflect the
 annotation in any "why did this pass?" explanation.
-
-## Maintenance — keeping this skill accurate
-
-Endpoint paths + params are grounded in the Fianu web client
-(`src/functions/api.js`). The pass/fail and release-state semantics are
-**client-observed** and the most likely to drift — confirm before release:
-
-| Source of truth | What it grounds |
-|---|---|
-| `../core` handler for `/assets/:asset/gates/policies/controls` | The runtime gate→controls response shape and the composite pass/fail rule. |
-| `../core` handler for `/gates/:id/attestations/summary` | The summary envelope, filters, and `result`/`status` enums. |
-| `../core` handlers for `/releases` and `/assets/releases/:uuid/*` | The release lifecycle states and the evidence scan/resync/modifier contracts. |
-| `../controllers/` | Gate evaluation + release orchestration — the authoritative decision path. |
 
 ## See also
 

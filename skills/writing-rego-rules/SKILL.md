@@ -15,18 +15,33 @@ into an attestation.
 This skill is the canonical home for the Fianu Rego conventions. Load it
 when designing a new control or modifying an existing one.
 
-## v1 syntax requirement
+## Write v1
 
-Every Fianu Rego rule MUST begin with:
+A new Fianu Rego rule SHOULD begin with:
 
 ```rego
 package rule
 import rego.v1
 ```
 
-The `import rego.v1` directive enables v1 syntax — the `if` keyword for
-every rule body, `every` for quantifiers, stricter parsing. Rules written
-in v0 syntax will not be accepted.
+v1 is what every new rule uses; v0 (without `import rego.v1`) is accepted
+only for legacy rules the evaluator already parses that way.
+
+<!-- facts:rego-parsers -->The evaluator parses a rule as Rego `v0`, then `v1`, so both syntaxes work. Write new rules with `import rego.v1`.<!-- /facts:rego-parsers --> The `import rego.v1` directive enables the v1 keywords: `if` on every rule body, `every`, `in` and `contains`.
+
+Result booleans resolve in this order, and a rule that sets none fails: <!-- facts:result-precedence -->`pass` > `inProgress` > `warn` > `notRequired` > `notFound` > `fail`<!-- /facts:result-precedence -->.
+
+Fianu builtins every rule can call:
+<!-- facts:rego-builtins -->
+| Builtin | Arguments |
+| --- | --- |
+| `log` | 1 |
+| `fianu.record_violation` | 2 |
+| `loadAssets` | 2 |
+| `callExternalURL` | 3 |
+| `withoutExceptions` | 2 |
+<!-- /facts:rego-builtins -->
+Not available to policy code: <!-- facts:rego-removed -->`http.send`<!-- /facts:rego-removed -->.
 
 ## input ↔ data mapping
 

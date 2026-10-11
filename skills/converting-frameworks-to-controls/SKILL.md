@@ -64,8 +64,7 @@ Process each unmatched requirement with classification confidence ≥ 0.80:
    Ensure every `data.*` reference in the Rego rule maps to a template
    key.
 5. **Pick the scope** (repository / module / artifact / release /
-   abstract). See `using-fianu-best-practices` → FIANU.md §Controls >
-   Control Scope.
+   abstract). See `using-fianu-best-practices` → FIANU.md §Controls > Control Scope.
 6. **Place in hierarchy** via `placing-entities-in-hierarchy`.
 7. **Assign confidence** for the generated design.
 

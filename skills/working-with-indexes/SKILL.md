@@ -20,7 +20,7 @@ source: the YAML file shape lives in `deploying-entities-yaml`, the
 `fianu_index` Terraform resource in `deploying-entities-terraform`, and the
 CEL expression language in `writing-cel-expressions`.
 
-Response shapes are **client-observed**; see `## Maintenance`.
+Response shapes are **client-observed**.
 
 ## Read endpoints
 
@@ -105,18 +105,6 @@ string — it must be in the **body**.
 
 ### `:key` as UUID or path
 Both resolve. A path key does not need encoding beyond normal URL rules.
-
-## Maintenance — keeping this skill accurate
-
-Endpoint paths + params are grounded in the Fianu web client
-(`src/functions/api.js`, "Indexes API — CORE-2541"). Response shapes are
-client-observed. Confirm before release:
-
-| Source of truth | What it grounds |
-|---|---|
-| `../core/external/transport/indexes/requests.go` | `PreviewRequest` (body pagination), list filters, the typed `F_72xxx` errors. |
-| `../core/server/console/routes.go` | Index deployer registration + the CEL compile hook the preview/deploy path depends on. |
-| `../core/external/db/types/fianu/entities/indexes.go` | Index detail model and the criteria converter that dedups inline expressions onto a private index. |
 
 ## See also
 

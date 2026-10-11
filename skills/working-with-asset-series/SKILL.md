@@ -42,12 +42,9 @@ Series are a lookup table (`series_catalog`), each row a `seriesName` ↔
 | `period_q` | 2121 | Quarterly period |
 | `period_y` | 2122 | Yearly period |
 
-**Do not trust `external/db/series/constants.go` in `../core`.** That package is
-dead code — its only importer is a test — and its codes disagree with the rows
-actually seeded (`jira_issue`/`jira_fix_version` are not seeded at all; it
-places `release` at 2115 and omits `tag` and `timestamp`). The table above
-follows the seeded catalog and `external/db/variables/types.go`. See
-`## Maintenance`.
+**The table above is the seeded catalog.** Older references that place
+`release` at 2115, omit `tag` and `timestamp`, or list `jira_issue` /
+`jira_fix_version` are wrong — those two series are not seeded at all.
 
 **Unknown series names are rejected at entity-deploy time**, with a clear
 message: `series[N]: unknown series name '<x>' - cannot resolve code`, returned
@@ -60,9 +57,7 @@ Two gaps worth knowing:
   skipped. The backstop is then a composite foreign key into `series_catalog`,
   whose error is sanitized to `cannot perform operation due to related
   resource constraints` — technically enforced, practically opaque.
-- `IsValidSeriesPair` in `../core` is dead code: its only caller is
-  test-only, and on mismatch it returns `nil` silently rather than erroring.
-  Do not treat it as the enforcement point.
+- No other series-pair check exists on the deploy path; do not assume one.
 
 Nothing validates a `seriesId` **value** — only non-empty is checked.
 
@@ -109,8 +104,8 @@ on `commit`. The DB enforces at most one `primary` series row per attestation.
 Two caveats: when the occurrence carries **none** of the declared series the
 version is left unchanged rather than reduced, and a control declaring no
 assets at all falls back to a legacy scope path. Step 1 is currently a no-op
-across `../official-controls` — no prod control declares different series per
-asset type — but do not rely on code ordering alone as the rule.
+across the official control library — no shipped control declares different
+series per asset type — but do not rely on code ordering alone as the rule.
 
 **So "keyed on digest" is a property of the ingested evidence, not of the
 spec.** 19 prod controls declare `[digest, uri, commit]` on `type: artifact` —
@@ -179,7 +174,7 @@ POST /evidence/assets/by-series
 
 **`associations` is a JSON string, not a boolean.** Send `"true"`; sending
 `true` is a decode error → 400. (The web client sends a real boolean and is
-wrong; a guard test in `../core` pins the string behavior.) Only `seriesId` is
+wrong; the backend pins the string behavior.) Only `seriesId` is
 required.
 
 Returns note refs with `seriesID` / `seriesCode` / `seriesName` / `seriesType`
@@ -199,7 +194,7 @@ ignored — the series predicate then binds an empty string and you get
 
 The response is an **object**, not an array:
 
-```jsonc
+```text
 { "summary": { … }, "attestations": [ { …, "raw": { … } } ] }
 ```
 
@@ -213,7 +208,7 @@ Each entry carries the **full raw note** under `raw`, so one call yields results
 This is the right call for "list all control results for this app at this
 gitsha, with the failing details." Prefer it over fanning out per attestation.
 
-**Commit-series only.** `../core` carries an explicit note that raw-snapshot
+**Commit-series only.** Raw-snapshot
 reporting is supported at the commit series level only. Handing it a digest
 still matches attestations, but `summary.git.commit` / `tag` resolve through
 commit_manager and come back null. For digest-landed evidence use mode 1 or 3.
@@ -269,28 +264,6 @@ tool's own artifact, not a platform state.
 - **Name/code pairs** — enforced only by DB foreign keys at entity-deploy time, as an opaque 400. Not validated on reads.
 - **`tag` is a real series** (2113) and is declared by `ci.build.pipeline` among others. Earlier drafts of this skill wrongly said otherwise.
 - **Empty result** — meaningless until you know you queried the right series.
-
-## Maintenance — keeping this skill accurate
-
-Grounded in `../core` at these exact locations:
-
-| Claim | Source |
-|---|---|
-| Series catalog rows/codes | `internal/testing/integration/db/scripts/a_2_series_catalog.sh` (seeded rows) + `external/db/variables/types.go` (`SeriesCatalog`) |
-| `series_type` enum = primary/association | `internal/testing/integration/db/scripts/a_types.sh` |
-| One winning series by lowest code | `pkg/evaluation/evaluate.go` (`filterVersionBySeries`, `assignVersionV2`) |
-| Query matches series **value** only | `external/db/evidence/v1/shared.go` (the `note_to_series.series_id = …` EXISTS clause; the `seriesName` param is dead) |
-| `associations` widens by non-emptiness, entries narrow | `external/db/evidence/v1/shared.go` + the `get_related_series_ids` SQL function |
-| violations requires `seriesId` → 400 | `external/db/evidence/args.go` (`SelectAssetViolationsArgs.IsValid`) |
-| snapshot latest-commit fallback | `external/db/evidence/v1/asset_evidence.go` |
-| by-series `associations` is a string | `pkg/queries/postgresql/assets.go` + `assets_by_series_test.go` |
-| batch validation (modes, 100 cap, overview rejection, seriesType enum) | `external/db/evidence/args.go` |
-| `export` returns full raw notes | `server/consulta/routes/evidence.go` (`/assets/:asset/attestations/export`) + `external/db/evidence/reporting.go` |
-| 19 controls declare `[digest, uri, commit]` | `../official-controls/envs/prod/controls/**/spec.yaml` |
-| No `unknown` result value | `fior` `constants` + `external/pkg/occ-go/v1/variables/fianu.go` |
-
-`external/db/series/` and its `CLAUDE.md` are **stale dead code** — do not
-re-ground this skill against them.
 
 ## See also
 

@@ -1,0 +1,2149 @@
+{
+  "schemaVersion": 1,
+  "core": "1e64e5bb33a2c7cecdaa789dc6478a4394fa3826",
+  "measureTypes": [
+    "section",
+    "metric"
+  ],
+  "measureValues": [
+    "bool",
+    "number",
+    "string",
+    "array.string",
+    "array.object",
+    "regex"
+  ],
+  "measureKeyTypes": [
+    "string",
+    "number",
+    "bool"
+  ],
+  "measureNamePattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+  "resultKeys": [
+    "pass",
+    "fail",
+    "notRequired",
+    "inProgress",
+    "warn",
+    "notFound"
+  ],
+  "resultPrecedence": [
+    "pass",
+    "inProgress",
+    "warn",
+    "notRequired",
+    "notFound",
+    "fail"
+  ],
+  "caseKeys": [
+    "rule",
+    "detail",
+    "display",
+    "input",
+    "data"
+  ],
+  "entityStatuses": [
+    "draft",
+    "staging",
+    "active",
+    "inactive",
+    "archived"
+  ],
+  "entityStates": [
+    "draft",
+    "published",
+    "staging",
+    "rejected"
+  ],
+  "assetTypes": [
+    "application",
+    "artifact",
+    "module",
+    "release",
+    "repository"
+  ],
+  "seriesNames": [
+    "commit",
+    "digest",
+    "period_d",
+    "period_m",
+    "period_q",
+    "period_w",
+    "period_y",
+    "release",
+    "tag",
+    "timestamp",
+    "uri"
+  ],
+  "regoParsers": [
+    "v0",
+    "v1"
+  ],
+  "regoBuiltins": [
+    {
+      "name": "log",
+      "decl": {
+        "args": [
+          {
+            "of": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "type": "any"
+          }
+        ],
+        "result": {
+          "type": "any"
+        },
+        "type": "function"
+      }
+    },
+    {
+      "name": "fianu.record_violation",
+      "decl": {
+        "args": [
+          {
+            "type": "boolean"
+          },
+          {
+            "of": [
+              {
+                "type": "any"
+              }
+            ],
+            "type": "any"
+          }
+        ],
+        "result": {
+          "type": "any"
+        },
+        "type": "function"
+      }
+    },
+    {
+      "name": "loadAssets",
+      "decl": {
+        "args": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "result": {
+          "type": "any"
+        },
+        "type": "function"
+      }
+    },
+    {
+      "name": "callExternalURL",
+      "decl": {
+        "args": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "result": {
+          "type": "any"
+        },
+        "type": "function"
+      }
+    },
+    {
+      "name": "withoutExceptions",
+      "decl": {
+        "args": [
+          {
+            "type": "any"
+          },
+          {
+            "type": "any"
+          }
+        ],
+        "result": {
+          "type": "any"
+        },
+        "type": "function"
+      }
+    }
+  ],
+  "regoRemoved": [
+    "http.send"
+  ],
+  "producers": [
+    {
+      "plugin": "42crunch-dast",
+      "relationPath": "42crunch.dast.scan.result",
+      "detailFields": [
+        "apis",
+        "collection",
+        "scan_summary"
+      ]
+    },
+    {
+      "plugin": "42crunch-oas",
+      "relationPath": "42crunch.oas.scan.result",
+      "detailFields": [
+        "apis",
+        "collection",
+        "summary"
+      ]
+    },
+    {
+      "plugin": "aquasecurity-trivy",
+      "relationPath": "trivy.containerscan",
+      "detailFields": [
+        "ArtifactID",
+        "ArtifactName",
+        "ArtifactType",
+        "CreatedAt",
+        "Metadata",
+        "ReportID",
+        "Results",
+        "SchemaVersion",
+        "Trivy"
+      ]
+    },
+    {
+      "plugin": "aquasecurity-trivy",
+      "relationPath": "trivy.iacscan",
+      "detailFields": [
+        "ArtifactID",
+        "ArtifactName",
+        "ArtifactType",
+        "CreatedAt",
+        "Metadata",
+        "ReportID",
+        "Results",
+        "SchemaVersion",
+        "Trivy"
+      ]
+    },
+    {
+      "plugin": "bandit-sast",
+      "relationPath": "bandit.sast",
+      "detailFields": [
+        "errors",
+        "generated_at",
+        "metrics",
+        "results"
+      ]
+    },
+    {
+      "plugin": "bandit-sast",
+      "relationPath": "bandit.sast.sarif",
+      "detailFields": [
+        "$schema",
+        "inlineExternalProperties",
+        "properties",
+        "runs",
+        "version"
+      ]
+    },
+    {
+      "plugin": "bitbucket",
+      "relationPath": "ci.bitbucket.commit",
+      "detailFields": [
+        "ahead_by",
+        "base",
+        "behind_by",
+        "commits",
+        "head",
+        "status",
+        "total_commits",
+        "url"
+      ]
+    },
+    {
+      "plugin": "blackduck",
+      "relationPath": "blackduck.sca",
+      "detailFields": [
+        "scan"
+      ]
+    },
+    {
+      "plugin": "checkmarx",
+      "relationPath": "checkmarx.one.scan.details",
+      "detailFields": [
+        "branch",
+        "commitHash",
+        "completedScans",
+        "correlationId",
+        "format",
+        "initiator",
+        "projectId",
+        "projectName",
+        "repoUrl",
+        "scanId",
+        "scanReports"
+      ]
+    },
+    {
+      "plugin": "checkmarx",
+      "relationPath": "checkmarx.sast",
+      "detailFields": [
+        "additionalDetails",
+        "files",
+        "link",
+        "loc",
+        "project",
+        "projectId",
+        "scanType",
+        "team",
+        "xissues"
+      ]
+    },
+    {
+      "plugin": "checkmarx",
+      "relationPath": "checkmarx.sast.scan_report.details",
+      "detailFields": [
+        "originalUrl",
+        "projectId",
+        "scanDetails",
+        "scanId"
+      ]
+    },
+    {
+      "plugin": "checkmarx",
+      "relationPath": "checkmarx.sca.scan_report.details",
+      "detailFields": [
+        "originalUrl",
+        "projectId",
+        "reportUuid",
+        "scanReport"
+      ]
+    },
+    {
+      "plugin": "cobertura",
+      "relationPath": "cobertura.testing.coverage",
+      "detailFields": [
+        "branch_rate",
+        "branches_covered",
+        "branches_valid",
+        "complexity",
+        "line_rate",
+        "lines_covered",
+        "lines_valid",
+        "packages",
+        "sources",
+        "timestamp",
+        "version"
+      ]
+    },
+    {
+      "plugin": "cycode",
+      "relationPath": "cycode.vulnerabilities",
+      "detailFields": [
+        "check_run",
+        "pipelineRun",
+        "project",
+        "push_event",
+        "repositoryName",
+        "repositoryNodeID",
+        "scan_metadata",
+        "scmInfo",
+        "summary",
+        "vulnerabilities",
+        "workflow_run"
+      ]
+    },
+    {
+      "plugin": "env-comparison",
+      "relationPath": "env.comparison.sonarqube.sca",
+      "detailFields": [
+        "benchmark",
+        "current"
+      ]
+    },
+    {
+      "plugin": "fianu-deployments",
+      "relationPath": "cd.deployment.asset",
+      "detailFields": [
+        "artifact",
+        "commit",
+        "commitTag",
+        "deployment",
+        "digest",
+        "evidence",
+        "message",
+        "registry",
+        "repositories",
+        "signature",
+        "tags",
+        "type",
+        "uris",
+        "uuid"
+      ]
+    },
+    {
+      "plugin": "flake8",
+      "relationPath": "flake8.sast",
+      "detailFields": []
+    },
+    {
+      "plugin": "flake8",
+      "relationPath": "flake8.sast.junit",
+      "detailFields": [
+        "testsuites"
+      ]
+    },
+    {
+      "plugin": "github",
+      "relationPath": "ci.commit",
+      "detailFields": [
+        "ahead_by",
+        "base",
+        "behind_by",
+        "commits",
+        "head",
+        "status",
+        "total_commits",
+        "url"
+      ]
+    },
+    {
+      "plugin": "github",
+      "relationPath": "ci.commithistory",
+      "detailFields": [
+        "ahead_by",
+        "base",
+        "behind_by",
+        "commits",
+        "head",
+        "status",
+        "total_commits",
+        "url"
+      ]
+    },
+    {
+      "plugin": "github-actions",
+      "relationPath": "ci.github.app.build.artifacts",
+      "detailFields": [
+        "artifacts",
+        "jobs",
+        "runs",
+        "suites",
+        "summary"
+      ]
+    },
+    {
+      "plugin": "github-actions",
+      "relationPath": "ci.github.app",
+      "detailFields": [
+        "artifacts",
+        "jobs",
+        "runs",
+        "suites",
+        "summary"
+      ]
+    },
+    {
+      "plugin": "github-actions",
+      "relationPath": "ci.pipeline",
+      "detailFields": [
+        "branch",
+        "pipeline",
+        "runs",
+        "snapshot",
+        "summary"
+      ]
+    },
+    {
+      "plugin": "github-actions",
+      "relationPath": "f.event.github.log.platform.checkmarx.sast.scan_report",
+      "detailFields": []
+    },
+    {
+      "plugin": "github-actions",
+      "relationPath": "f.event.github.log.platform.checkmarx.sca.scan_report",
+      "detailFields": []
+    },
+    {
+      "plugin": "github-attestations",
+      "relationPath": "ci.github.attestations",
+      "detailFields": [
+        "artifact",
+        "attestedCommit",
+        "class",
+        "commitDetermined",
+        "commitMatch",
+        "createdAt",
+        "eventCommit",
+        "evidenceCount",
+        "evidenceName",
+        "evidenceUrl",
+        "predicate",
+        "predicateBytes",
+        "predicateTruncated",
+        "predicateType",
+        "providerId",
+        "signer",
+        "source",
+        "verificationError",
+        "verificationMethod",
+        "verifiedByFianu",
+        "verifiedByJfrog"
+      ]
+    },
+    {
+      "plugin": "github-attestations",
+      "relationPath": "ci.github.attestations_https___cyclonedx.org_bom",
+      "detailFields": [
+        "mediaType",
+        "signature",
+        "statement",
+        "verifiedIdentity",
+        "verifiedTimestamps"
+      ]
+    },
+    {
+      "plugin": "github-attestations",
+      "relationPath": "ci.github.attestations_https___slsa.dev_provenance_v1",
+      "detailFields": [
+        "mediaType",
+        "signature",
+        "statement",
+        "verifiedIdentity",
+        "verifiedTimestamps"
+      ]
+    },
+    {
+      "plugin": "github-codeql",
+      "relationPath": "sast.codeql",
+      "detailFields": [
+        "alerts",
+        "analyses",
+        "repository"
+      ]
+    },
+    {
+      "plugin": "github-dependabot",
+      "relationPath": "ci.dependabot",
+      "detailFields": [
+        "alerts",
+        "repository"
+      ]
+    },
+    {
+      "plugin": "github-dependency-review",
+      "relationPath": "ci.dependency.review",
+      "detailFields": [
+        "repository",
+        "results"
+      ]
+    },
+    {
+      "plugin": "github-file-evidence",
+      "relationPath": "ci.github.file.evidence",
+      "detailFields": [
+        "files",
+        "metadata"
+      ]
+    },
+    {
+      "plugin": "github-fileanalyzer",
+      "relationPath": "ci.github.repository_files",
+      "detailFields": [
+        "tree",
+        "workflows"
+      ]
+    },
+    {
+      "plugin": "github-rulesets",
+      "relationPath": "ci.github.repository_rulesets",
+      "detailFields": [
+        "ruleSets"
+      ]
+    },
+    {
+      "plugin": "github-secret-scanning",
+      "relationPath": "ci.github.secret_scanning",
+      "detailFields": [
+        "alerts",
+        "repository"
+      ]
+    },
+    {
+      "plugin": "gitlab",
+      "relationPath": "ci.gitlab.commit",
+      "detailFields": [
+        "commit",
+        "commitDiff",
+        "mergeRequests",
+        "signature"
+      ]
+    },
+    {
+      "plugin": "gitlab",
+      "relationPath": "ci.gitlab.pipeline.build.artifacts",
+      "detailFields": [
+        "asset",
+        "digest",
+        "id",
+        "name",
+        "properties",
+        "source",
+        "tags",
+        "type",
+        "version"
+      ]
+    },
+    {
+      "plugin": "gitlab",
+      "relationPath": "ci.gitlab.pipeline",
+      "detailFields": [
+        "artifacts",
+        "branch",
+        "detailedStatus",
+        "duration",
+        "jobs",
+        "pipeline",
+        "snapshot",
+        "source",
+        "status",
+        "summary"
+      ]
+    },
+    {
+      "plugin": "gitlab",
+      "relationPath": "f.event.gitlab.log.platform.checkmarx.sast.scan_report",
+      "detailFields": [
+        "filterCategory",
+        "filterKey",
+        "instanceKey",
+        "instanceName",
+        "integrationPath",
+        "integrationType",
+        "matchedPattern",
+        "original",
+        "path",
+        "platformName",
+        "queryParameters",
+        "scheme",
+        "snippet",
+        "tags",
+        "url"
+      ]
+    },
+    {
+      "plugin": "gitlab",
+      "relationPath": "f.event.gitlab.log.platform.checkmarx.sca.scan_report",
+      "detailFields": [
+        "filterCategory",
+        "filterKey",
+        "instanceKey",
+        "instanceName",
+        "integrationPath",
+        "integrationType",
+        "matchedPattern",
+        "original",
+        "path",
+        "platformName",
+        "queryParameters",
+        "scheme",
+        "snippet",
+        "tags",
+        "url"
+      ]
+    },
+    {
+      "plugin": "gitlab",
+      "relationPath": "f.gitlab.clusterimagescan",
+      "detailFields": [
+        "scan",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab",
+      "relationPath": "f.gitlab.containerscan",
+      "detailFields": [
+        "remediations",
+        "scan",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab",
+      "relationPath": "f.gitlab.dast",
+      "detailFields": [
+        "scan",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab",
+      "relationPath": "f.gitlab.dependencyscan",
+      "detailFields": [
+        "dependency_files",
+        "scan",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab",
+      "relationPath": "f.gitlab.sast",
+      "detailFields": [
+        "remediations",
+        "scan",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab",
+      "relationPath": "f.gitlab.secretdetection",
+      "detailFields": [
+        "scan",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab",
+      "relationPath": "f.gitlab.testing.coverage.cobertura",
+      "detailFields": [
+        "branch_rate",
+        "branches_covered",
+        "branches_valid",
+        "complexity",
+        "line_rate",
+        "lines_covered",
+        "lines_valid",
+        "packages",
+        "sources",
+        "timestamp",
+        "version"
+      ]
+    },
+    {
+      "plugin": "gitlab",
+      "relationPath": "f.gitlab.testing.coverage.jacoco",
+      "detailFields": [
+        "report"
+      ]
+    },
+    {
+      "plugin": "gitlab",
+      "relationPath": "f.gitlab.testing.junit",
+      "detailFields": [
+        "testsuites"
+      ]
+    },
+    {
+      "plugin": "gitlab-file-evidence",
+      "relationPath": "ci.gitlab.file.evidence",
+      "detailFields": [
+        "files",
+        "metadata"
+      ]
+    },
+    {
+      "plugin": "gitlab-security",
+      "relationPath": "f.gitlab.containerscan.trivy",
+      "detailFields": [
+        "artifact",
+        "remediations",
+        "scan",
+        "schema",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab-security",
+      "relationPath": "f.gitlab.sast.checkov",
+      "detailFields": [
+        "remediations",
+        "scan",
+        "schema",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab-security",
+      "relationPath": "f.gitlab.sast.kics",
+      "detailFields": [
+        "remediations",
+        "scan",
+        "schema",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab-security",
+      "relationPath": "f.gitlab.sast.semgrep",
+      "detailFields": [
+        "remediations",
+        "scan",
+        "schema",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab-security",
+      "relationPath": "f.gitlab.secretdetection.gitleaks",
+      "detailFields": [
+        "remediations",
+        "scan",
+        "schema",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab-security",
+      "relationPath": "f.gitlab.security.clusterimagescan",
+      "detailFields": [
+        "artifact",
+        "remediations",
+        "scan",
+        "schema",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab-security",
+      "relationPath": "f.gitlab.security.containerscan",
+      "detailFields": [
+        "artifact",
+        "remediations",
+        "scan",
+        "schema",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab-security",
+      "relationPath": "f.gitlab.security.dast",
+      "detailFields": [
+        "remediations",
+        "scan",
+        "schema",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab-security",
+      "relationPath": "f.gitlab.security.dependencyscan",
+      "detailFields": [
+        "remediations",
+        "scan",
+        "schema",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab-security",
+      "relationPath": "f.gitlab.security.sast",
+      "detailFields": [
+        "remediations",
+        "scan",
+        "schema",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab-security",
+      "relationPath": "f.gitlab.security.secretdetection",
+      "detailFields": [
+        "remediations",
+        "scan",
+        "schema",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab-security",
+      "relationPath": "f.gitlab.security.vulnerabilities",
+      "detailFields": [
+        "project_id",
+        "summary",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "gitlab-workflow-config",
+      "relationPath": "ci.gitlab.workflow_config",
+      "detailFields": [
+        "commitSha",
+        "errorMessage",
+        "fileContent",
+        "fileContentRaw",
+        "fileExists",
+        "fileName",
+        "projectId"
+      ]
+    },
+    {
+      "plugin": "helm",
+      "relationPath": "helm.sign",
+      "detailFields": [
+        "packagedDeployableArtifacts",
+        "rekor",
+        "verification"
+      ]
+    },
+    {
+      "plugin": "jacoco",
+      "relationPath": "jacoco.testing.coverage",
+      "detailFields": [
+        "report"
+      ]
+    },
+    {
+      "plugin": "jenkins",
+      "relationPath": "ci.jenkins.pipeline.build.artifacts",
+      "detailFields": [
+        "artifacts",
+        "buildNumber",
+        "event",
+        "images",
+        "jobName",
+        "scmInfo",
+        "state",
+        "system",
+        "url",
+        "workflow"
+      ]
+    },
+    {
+      "plugin": "jenkins",
+      "relationPath": "ci.jenkins.pipeline.in_progress",
+      "detailFields": [
+        "artifacts",
+        "buildNumber",
+        "event",
+        "images",
+        "jobName",
+        "scmInfo",
+        "state",
+        "system",
+        "url",
+        "workflow"
+      ]
+    },
+    {
+      "plugin": "jenkins",
+      "relationPath": "ci.jenkins.pipeline",
+      "detailFields": [
+        "artifacts",
+        "buildNumber",
+        "event",
+        "images",
+        "jobName",
+        "scmInfo",
+        "state",
+        "system",
+        "url",
+        "workflow"
+      ]
+    },
+    {
+      "plugin": "jenkins",
+      "relationPath": "f.event.jenkins.log.platform.checkmarx.sast.scan_report",
+      "detailFields": []
+    },
+    {
+      "plugin": "jenkins",
+      "relationPath": "f.event.jenkins.log.platform.checkmarx.sca.scan_report",
+      "detailFields": []
+    },
+    {
+      "plugin": "jfrog-signatures",
+      "relationPath": "",
+      "detailFields": [
+        "artifact",
+        "attestedCommit",
+        "class",
+        "commitDetermined",
+        "commitMatch",
+        "createdAt",
+        "createdBy",
+        "downloadPath",
+        "eventCommit",
+        "evidenceCount",
+        "evidenceName",
+        "evidenceUrl",
+        "platformUrl",
+        "predicate",
+        "predicateBytes",
+        "predicateCategory",
+        "predicateSlug",
+        "predicateTruncated",
+        "predicateType",
+        "providerId",
+        "signer",
+        "source",
+        "verificationError",
+        "verificationMethod",
+        "verifiedByFianu",
+        "verifiedByJfrog"
+      ]
+    },
+    {
+      "plugin": "jfrog-xray",
+      "relationPath": "jfrog.xray.artifact_summary",
+      "detailFields": [
+        "general",
+        "issues",
+        "licenses",
+        "operational_risks",
+        "policyViolations"
+      ]
+    },
+    {
+      "plugin": "jira-batch",
+      "relationPath": "jira.no_response",
+      "detailFields": []
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.issue.created",
+      "detailFields": [
+        "changelog",
+        "issue",
+        "issue_event_type_name",
+        "timestamp",
+        "user",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.issue.deleted",
+      "detailFields": [
+        "changelog",
+        "issue",
+        "issue_event_type_name",
+        "timestamp",
+        "user",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.issue.updated",
+      "detailFields": [
+        "changelog",
+        "issue",
+        "issue_event_type_name",
+        "timestamp",
+        "user",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.project.archived",
+      "detailFields": [
+        "project",
+        "timestamp",
+        "user",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.project.created",
+      "detailFields": [
+        "project",
+        "timestamp",
+        "user",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.project.deleted",
+      "detailFields": [
+        "project",
+        "timestamp",
+        "user",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.project.restore_archived",
+      "detailFields": [
+        "project",
+        "timestamp",
+        "user",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.project.restore_soft_deleted",
+      "detailFields": [
+        "project",
+        "timestamp",
+        "user",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.project.soft_deleted",
+      "detailFields": [
+        "project",
+        "timestamp",
+        "user",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.project.updated",
+      "detailFields": [
+        "project",
+        "timestamp",
+        "user",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.version.created",
+      "detailFields": [
+        "timestamp",
+        "version",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.version.deleted",
+      "detailFields": [
+        "timestamp",
+        "version",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.version.released",
+      "detailFields": [
+        "timestamp",
+        "version",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.version.unreleased",
+      "detailFields": [
+        "timestamp",
+        "version",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-events",
+      "relationPath": "jira.version.updated",
+      "detailFields": [
+        "timestamp",
+        "version",
+        "webhookEvent"
+      ]
+    },
+    {
+      "plugin": "jira-pullrequest",
+      "relationPath": "ci.commithistory.jira",
+      "detailFields": [
+        "ahead_by",
+        "base",
+        "behind_by",
+        "commits",
+        "head",
+        "status",
+        "total_commits",
+        "url"
+      ]
+    },
+    {
+      "plugin": "jira-pullrequest",
+      "relationPath": "ci.commithistory.module.jira",
+      "detailFields": [
+        "ahead_by",
+        "base",
+        "behind_by",
+        "commits",
+        "head",
+        "status",
+        "total_commits",
+        "url"
+      ]
+    },
+    {
+      "plugin": "jira-pullrequest",
+      "relationPath": "jira.github.pull_request.event",
+      "detailFields": [
+        "commits",
+        "issue",
+        "pullRequest"
+      ]
+    },
+    {
+      "plugin": "junit",
+      "relationPath": "testing.cd.functional.junit",
+      "detailFields": [
+        "testsuites"
+      ]
+    },
+    {
+      "plugin": "junit",
+      "relationPath": "testing.cd.unit.junit",
+      "detailFields": [
+        "testsuites"
+      ]
+    },
+    {
+      "plugin": "junit",
+      "relationPath": "testing.ci.functional.junit",
+      "detailFields": [
+        "testsuites"
+      ]
+    },
+    {
+      "plugin": "junit",
+      "relationPath": "testing.ci.unit.junit",
+      "detailFields": [
+        "testsuites"
+      ]
+    },
+    {
+      "plugin": "junit",
+      "relationPath": "testing.unit.junit",
+      "detailFields": [
+        "testsuites"
+      ]
+    },
+    {
+      "plugin": "kyverno-linting",
+      "relationPath": "testing.kyverno.helm.linting",
+      "detailFields": [
+        "apiVersion",
+        "kind",
+        "metadata",
+        "results",
+        "scope",
+        "scopeSelector",
+        "summary"
+      ]
+    },
+    {
+      "plugin": "lacework",
+      "relationPath": "lacework.containerscan",
+      "detailFields": [
+        "cve",
+        "policy"
+      ]
+    },
+    {
+      "plugin": "manifest-cyber-sbom",
+      "relationPath": "manifest_cyber.sbom",
+      "detailFields": [
+        "bundle",
+        "verification"
+      ]
+    },
+    {
+      "plugin": "multimodule-commit-history",
+      "relationPath": "ci.commithistory.module",
+      "detailFields": [
+        "ahead_by",
+        "base",
+        "behind_by",
+        "commits",
+        "head",
+        "status",
+        "total_commits",
+        "url"
+      ]
+    },
+    {
+      "plugin": "mypy",
+      "relationPath": "mypy.sast",
+      "detailFields": [
+        "results"
+      ]
+    },
+    {
+      "plugin": "mypy",
+      "relationPath": "mypy.sast.junit",
+      "detailFields": [
+        "testsuites"
+      ]
+    },
+    {
+      "plugin": "pipaudit",
+      "relationPath": "pipaudit.sca.cyclonedx",
+      "detailFields": [
+        "$schema",
+        "annotations",
+        "bomFormat",
+        "components",
+        "compositions",
+        "declarations",
+        "definitions",
+        "dependencies",
+        "externalReferences",
+        "formulation",
+        "metadata",
+        "properties",
+        "serialNumber",
+        "services",
+        "signature",
+        "specVersion",
+        "version",
+        "vulnerabilities"
+      ]
+    },
+    {
+      "plugin": "pipaudit",
+      "relationPath": "pipaudit.sca",
+      "detailFields": [
+        "dependencies",
+        "fixes"
+      ]
+    },
+    {
+      "plugin": "prismacloud",
+      "relationPath": "prismacloud.containerscan",
+      "detailFields": [
+        "image",
+        "scan_result"
+      ]
+    },
+    {
+      "plugin": "pytest",
+      "relationPath": "pytest.testing.coverage.cobertura",
+      "detailFields": [
+        "coverage"
+      ]
+    },
+    {
+      "plugin": "pytest",
+      "relationPath": "pytest.testing.coverage",
+      "detailFields": [
+        "files",
+        "meta",
+        "totals"
+      ]
+    },
+    {
+      "plugin": "pytest",
+      "relationPath": "pytest.testing",
+      "detailFields": [
+        "collectors",
+        "created",
+        "duration",
+        "environment",
+        "exitcode",
+        "root",
+        "summary",
+        "tests"
+      ]
+    },
+    {
+      "plugin": "pytest",
+      "relationPath": "pytest.testing.junit",
+      "detailFields": [
+        "testsuites"
+      ]
+    },
+    {
+      "plugin": "sigstore-tools",
+      "relationPath": "blob.sign.file",
+      "detailFields": [
+        "bundle",
+        "certificate",
+        "uri",
+        "verification"
+      ]
+    },
+    {
+      "plugin": "sigstore-tools",
+      "relationPath": "blob.sign.sbom",
+      "detailFields": [
+        "bundle",
+        "certificate",
+        "verification"
+      ]
+    },
+    {
+      "plugin": "sigstore-tools",
+      "relationPath": "cosign.sign.asset.attestations",
+      "detailFields": [
+        "attestations"
+      ]
+    },
+    {
+      "plugin": "sigstore-tools",
+      "relationPath": "cosign.sign.asset.attestations.sbom",
+      "detailFields": [
+        "attestations"
+      ]
+    },
+    {
+      "plugin": "sigstore-tools",
+      "relationPath": "cosign.sign.asset.helm",
+      "detailFields": [
+        "bundles",
+        "signature",
+        "verification"
+      ]
+    },
+    {
+      "plugin": "sigstore-tools",
+      "relationPath": "cosign.sign.asset.sbom",
+      "detailFields": [
+        "bundles",
+        "signature",
+        "verification"
+      ]
+    },
+    {
+      "plugin": "sigstore-tools",
+      "relationPath": "cosign.sign",
+      "detailFields": [
+        "bundles",
+        "signature",
+        "verification"
+      ]
+    },
+    {
+      "plugin": "snyk-sast",
+      "relationPath": "snyk.sast",
+      "detailFields": [
+        "error",
+        "scan"
+      ]
+    },
+    {
+      "plugin": "snyk-sca",
+      "relationPath": "snyk.sca",
+      "detailFields": [
+        "scan",
+        "schemaFormat"
+      ]
+    },
+    {
+      "plugin": "sonarqube",
+      "relationPath": "sonarqube.sca",
+      "detailFields": [
+        "measures",
+        "properties",
+        "qualityGate",
+        "task"
+      ]
+    },
+    {
+      "plugin": "sonarqube",
+      "relationPath": "testing.sonarqube.cov.execution",
+      "detailFields": []
+    },
+    {
+      "plugin": "sonarqube",
+      "relationPath": "testing.sonarqube.cov.generic",
+      "detailFields": [
+        "-version",
+        "file"
+      ]
+    },
+    {
+      "plugin": "synopsys-coverity",
+      "relationPath": "sast.coverity",
+      "detailFields": [
+        "desktopAnalysisSettings",
+        "error",
+        "formatVersion",
+        "issues",
+        "suppressedIssueCount",
+        "type",
+        "warnings"
+      ]
+    },
+    {
+      "plugin": "tekton",
+      "relationPath": "ci.tekton.pipelinerun.build.artifacts",
+      "detailFields": [
+        "asset",
+        "digest",
+        "id",
+        "name",
+        "properties",
+        "source",
+        "tags",
+        "type",
+        "version"
+      ]
+    },
+    {
+      "plugin": "tekton",
+      "relationPath": "ci.tekton.pipelinerun",
+      "detailFields": [
+        "artifacts",
+        "parameters",
+        "pipelineRun",
+        "scmInfo",
+        "tasks",
+        "tektonHost"
+      ]
+    },
+    {
+      "plugin": "tekton",
+      "relationPath": "f.event.tekton.log.platform.checkmarx.sast.scan_report",
+      "detailFields": []
+    },
+    {
+      "plugin": "tekton",
+      "relationPath": "f.event.tekton.log.platform.checkmarx.sca.scan_report",
+      "detailFields": []
+    },
+    {
+      "plugin": "tenable-containerscan",
+      "relationPath": "tenable.containerscan",
+      "detailFields": [
+        "Digest",
+        "EndTime",
+        "ImageId",
+        "Link",
+        "OperatingSystem",
+        "Repository",
+        "ScanTime",
+        "Success",
+        "Tag",
+        "Version",
+        "Vulnerabilities",
+        "VulnerabilitySeverities"
+      ]
+    },
+    {
+      "plugin": "testrail-runs",
+      "relationPath": "testrail.run_results",
+      "detailFields": [
+        "plan",
+        "results",
+        "run",
+        "webhook"
+      ]
+    },
+    {
+      "plugin": "wiz-containerscan",
+      "relationPath": "wiz.containerscan",
+      "detailFields": [
+        "createdAt",
+        "createdBy",
+        "extraInfo",
+        "id",
+        "outdatedPolicies",
+        "policies",
+        "projects",
+        "result",
+        "scanOriginResource",
+        "startedAt",
+        "status",
+        "tags"
+      ]
+    },
+    {
+      "plugin": "wiz-iac",
+      "relationPath": "wiz.iacscan",
+      "detailFields": [
+        "createdAt",
+        "createdBy",
+        "extraInfo",
+        "id",
+        "outdatedPolicies",
+        "policies",
+        "projects",
+        "reportUrl",
+        "result",
+        "scanOriginResource",
+        "startedAt",
+        "status",
+        "taggedResource",
+        "tags"
+      ]
+    }
+  ],
+  "controlSchema": {
+    "additionalProperties": false,
+    "properties": {
+      "confidence": {
+        "type": "number"
+      },
+      "control": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "additionalProperties": false,
+            "properties": {
+              "assets": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "series": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "name": {
+                            "enum": [
+                              "commit",
+                              "digest",
+                              "period_d",
+                              "period_m",
+                              "period_q",
+                              "period_w",
+                              "period_y",
+                              "release",
+                              "tag",
+                              "timestamp",
+                              "uri"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "type": {
+                      "enum": [
+                        "application",
+                        "artifact",
+                        "module",
+                        "release",
+                        "repository"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "series",
+                    "type"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "config": {
+                "additionalProperties": false,
+                "properties": {
+                  "evidenceSubmission": {
+                    "type": "boolean"
+                  },
+                  "manualAttestations": {
+                    "type": "boolean"
+                  },
+                  "retries": {
+                    "type": "boolean"
+                  },
+                  "scope": {
+                    "enum": [
+                      "application",
+                      "artifact",
+                      "module",
+                      "release",
+                      "repository"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "evidenceSubmission",
+                  "manualAttestations",
+                  "retries",
+                  "scope"
+                ],
+                "type": "object"
+              },
+              "control": {
+                "additionalProperties": false,
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "displayKey": {
+                    "type": "string"
+                  },
+                  "fullName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "description",
+                  "displayKey",
+                  "fullName"
+                ],
+                "type": "object"
+              },
+              "documentation": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "url"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "evaluation": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "key": {
+                      "enum": [
+                        "rule",
+                        "detail",
+                        "display",
+                        "input",
+                        "data"
+                      ],
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "detail",
+                    "enabled",
+                    "key",
+                    "label"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "policyTemplate": {
+                "additionalProperties": false,
+                "properties": {
+                  "measures": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "children": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "children": {
+                                "items": {
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "children": {
+                                      "items": {
+                                        "additionalProperties": false,
+                                        "properties": {
+                                          "description": {
+                                            "type": "string"
+                                          },
+                                          "name": {
+                                            "type": "string"
+                                          },
+                                          "type": {
+                                            "enum": [
+                                              "section",
+                                              "metric"
+                                            ],
+                                            "type": "string"
+                                          },
+                                          "value": {
+                                            "enum": [
+                                              "",
+                                              "bool",
+                                              "number",
+                                              "string",
+                                              "array.string",
+                                              "regex"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "description",
+                                          "name",
+                                          "type",
+                                          "value"
+                                        ],
+                                        "type": "object"
+                                      },
+                                      "type": "array"
+                                    },
+                                    "description": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "enum": [
+                                        "section",
+                                        "metric"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "value": {
+                                      "enum": [
+                                        "",
+                                        "bool",
+                                        "number",
+                                        "string",
+                                        "array.string",
+                                        "regex"
+                                      ],
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "children",
+                                    "description",
+                                    "name",
+                                    "type",
+                                    "value"
+                                  ],
+                                  "type": "object"
+                                },
+                                "type": "array"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "enum": [
+                                  "section",
+                                  "metric"
+                                ],
+                                "type": "string"
+                              },
+                              "value": {
+                                "enum": [
+                                  "",
+                                  "bool",
+                                  "number",
+                                  "string",
+                                  "array.string",
+                                  "regex"
+                                ],
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "children",
+                              "description",
+                              "name",
+                              "type",
+                              "value"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "enum": [
+                            "section",
+                            "metric"
+                          ],
+                          "type": "string"
+                        },
+                        "value": {
+                          "enum": [
+                            "",
+                            "bool",
+                            "number",
+                            "string",
+                            "array.string",
+                            "regex"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "children",
+                        "description",
+                        "name",
+                        "type",
+                        "value"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "updatedAt": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "measures",
+                  "updatedAt",
+                  "version"
+                ],
+                "type": "object"
+              },
+              "relations": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "collection": {
+                      "type": "string"
+                    },
+                    "domain": {
+                      "type": "string"
+                    },
+                    "isPrimary": {
+                      "type": "boolean"
+                    },
+                    "note": {
+                      "enum": [
+                        "occurrence"
+                      ],
+                      "type": "string"
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "producer": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": false,
+                          "properties": {
+                            "path": {
+                              "type": "string"
+                            },
+                            "type": {
+                              "enum": [
+                                "plugin"
+                              ],
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "path",
+                            "type"
+                          ],
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": {
+                      "enum": [
+                        "plugin"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "collection",
+                    "domain",
+                    "isPrimary",
+                    "note",
+                    "path",
+                    "producer",
+                    "type"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "results": {
+                "additionalProperties": false,
+                "properties": {
+                  "fail": {
+                    "type": "boolean"
+                  },
+                  "inProgress": {
+                    "type": "boolean"
+                  },
+                  "notFound": {
+                    "type": "boolean"
+                  },
+                  "notRequired": {
+                    "type": "boolean"
+                  },
+                  "pass": {
+                    "type": "boolean"
+                  },
+                  "warn": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "fail",
+                  "inProgress",
+                  "notFound",
+                  "notRequired",
+                  "pass",
+                  "warn"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "assets",
+              "config",
+              "control",
+              "documentation",
+              "evaluation",
+              "policyTemplate",
+              "relations",
+              "results"
+            ],
+            "type": "object"
+          },
+          "metadata": {
+            "additionalProperties": false,
+            "properties": {
+              "aiGenerated": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "aiGenerated"
+            ],
+            "type": "object"
+          },
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "control"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "additionalProperties": false,
+            "properties": {
+              "semantic": {
+                "enum": [
+                  "1"
+                ],
+                "type": "string"
+              },
+              "state": {
+                "enum": [
+                  "draft"
+                ],
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "inactive"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "semantic",
+              "state",
+              "status"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "detail",
+          "metadata",
+          "name",
+          "path",
+          "type",
+          "version"
+        ],
+        "type": "object"
+      },
+      "notes": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "reuse": {
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "reason"
+        ],
+        "type": "object"
+      }
+    },
+    "required": [
+      "confidence",
+      "control",
+      "notes",
+      "reuse"
+    ],
+    "type": "object"
+  }
+}

@@ -8,12 +8,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repo layout
 
-- `skills/` — the canonical skill library (24 skills, 5 groups). See `docs/architecture.md` for the full inventory.
+- `skills/` — the canonical skill library. See `docs/architecture.md` for the full inventory.
 - `.claude-plugin/` / `.codex-plugin/` / `gemini-extension.json` / `plugin.json` (root, Copilot) — per-harness plugin manifests.
 - `hooks/` — Claude Code SessionStart hook that bootstraps `using-fianu-skills`.
-- `scripts/` — `bump-version.sh` (lockstep version updates) and `validate-skills.sh` (frontmatter + canary-string lint).
+- `scripts/` — `bump-version.sh` (lockstep version updates), `validate-skills.sh` (frontmatter + canary-string + public-leak lint), `sync-provider-docs.sh`, `build-bundles.py` (agent prompt bundles), `render-facts.py` (generated facts regions), `check-code-blocks.py` (every code block runs).
+- `facts/facts.json` — generated platform facts (enums, Rego builtins, plugin schemas).
+- `manifests/agent-contexts.json` — which skills each Fianu agent entry point loads.
 - `docs/architecture.md` and `docs/authoring-skills.md` — design docs for contributors.
-- `docs/superpowers/specs/` and `docs/superpowers/plans/` — the restructure spec and plan that produced this layout.
 
 ## Working on skills
 
@@ -31,42 +32,59 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Validation
 
-`scripts/validate-skills.sh` checks frontmatter (name matches directory, description present) and canary-string locations. Run it before every commit; CI will run it on every PR once configured.
+`.github/workflows/validate.yml` runs on every PR. Run the same checks locally before committing:
+
+```bash
+sh scripts/validate-skills.sh            # frontmatter, canaries, manifest, public-leak denylist
+python3 scripts/build-bundles.py --check # every pointer resolves inside its bundle
+python3 scripts/render-facts.py --check  # facts regions match facts/facts.json
+python3 scripts/check-code-blocks.py     # every rego/json/yaml block parses (needs opa)
+```
+
+## Bundles
+
+The in-cluster agent cannot open files, so `scripts/build-bundles.py` resolves every pointer ahead of time. A bundle is every SKILL.md body `manifests/agent-contexts.json` lists for an entry point, frontmatter stripped, in manifest order, then every file those bodies point at, inlined once each. Pointers it recognises:
+
+```
+references/<file>.md               a file in the same skill's references/
+<skill>/references/<file>.md       a file in another skill's references/
+`<skill>` -> <file>.md             the same, in prose (the arrow is -> or U+2192)
+<file>.md §<A> > <B> / §<C>        every section named must be a heading in <file>
+```
+
+A pointer dangles when its file is missing, its skill is not in the same entry point, or a section it names is not a heading.
+
+## This repo is public
+
+Everything here ships to customers and is readable by anyone. `validate-skills.sh`
+fails on references to Fianu-internal repos, internal roles, cloud accounts,
+cluster hostnames, or backend source paths. Maintainer-only grounding (which
+backend file proves which claim) lives in the private `fianulabs/skills` repo's
+`PROVENANCE.md` — never add a "Maintenance" or "source of truth" section here.
+
+Fianu engineers work on this repo as the `public/` submodule of `fianulabs/skills`,
+which pins it, runs control evals against it, and publishes it. Never hand-type a
+value the platform can enumerate; it belongs in a `<!-- facts:... -->` region.
 
 ## Generated & vendored content
 
-Two reference sets are derived from sibling repos and must never be hand-edited:
+These are derived from other sources and must never be hand-edited:
 
 | Path | Produced by | Source of truth |
 |---|---|---|
-| `skills/using-fianu-api/references/api-index.md` | `scripts/gen-api-index.sh` | `../core/cmd/proxy/kodata/config/proxies/*/proxies.yaml` (working tree) |
-| `skills/deploying-entities-terraform/references/provider-docs/` | `scripts/sync-provider-docs.sh` | `../terraform-provider-fianu` at its **newest release tag** (the script fetches tags; it does not read the working tree) |
+| `skills/using-fianu-api/references/api-index.md` | Fianu-internal tooling (private repo) | The API gateway config |
+| `facts/facts.json` | Fianu-internal tooling (private repo) | The platform source; render with `python3 scripts/render-facts.py` |
+| `skills/deploying-entities-terraform/references/provider-docs/` | `scripts/sync-provider-docs.sh` | [`fianulabs/terraform-provider-fianu`](https://github.com/fianulabs/terraform-provider-fianu) at its **newest release tag** (the script fetches tags; it does not read the working tree) |
 
-Run both before `bump-version.sh`, and use `--check` on either to detect drift without writing:
-
-```bash
-./scripts/gen-api-index.sh && ./scripts/sync-provider-docs.sh
-./scripts/gen-api-index.sh --check && ./scripts/sync-provider-docs.sh --check
-```
-
-Both need the sibling repo checked out, so neither belongs in `validate-skills.sh` — CI runs that without siblings.
-
-## Cross-repo context
-
-Skill content depends on contracts that originate in sibling repos (`~/Documents/fianulabs/core/`):
-
-- **`../core/`** — Go backend. Every endpoint a skill references (`GET /tickets/:uuid`, `POST /create/control`, `GET /pods/entities/.../llm_context_rule/...`) has a handler here. Verify request/response shape against the handler before changing API tables.
-- **`../fianu-plugins/`** — Plugin source. `skills/working-with-evidence-plugins/references/plugin-catalog.md` must match what's shipped here.
-- **`../controllers/`** — Resource controllers for attestation/evaluation orchestration.
-- **`../terraform-provider-fianu/`** — Entity-as-code surface. Its `docs/` are generated by `tfplugindocs` from the live provider schemas and vendored into `deploying-entities-terraform` (see "Generated & vendored content"). Read `CHANGELOG.md` there before touching that skill's prose — it is what tells you the prose has gone stale.
-
-There is no compile-time check that skills match sibling-repo state. Staleness compounds silently — when in doubt, grep the sibling repo.
+Run `./scripts/sync-provider-docs.sh` (or `--check` to detect drift) before
+`bump-version.sh`. It needs the provider repo checked out next to this one, so it
+is not part of `validate-skills.sh`.
 
 ## Things to avoid
 
 - Don't introduce subjective language ("risky", "concerning", "warrants caution") into `analyzing-tickets`. That skill is fact-only by design.
 - Don't add a confidence score to `analyzing-tickets`. Confidence belongs to `managing-ticket-approvals` (via `computing-decision-confidence`).
-- Don't invent plugin names, control entity keys, or endpoint paths. If you can't ground it in `../core/` or `../fianu-plugins/`, leave it out.
+- Don't invent plugin names, control entity keys, or endpoint paths. If you can't ground it in `api-index.md`, the plugin catalog, or a live API response, leave it out.
 - Don't bypass `bump-version.sh`. Editing a manifest version directly always introduces drift.
 - Don't edit frontmatter `name:` after a skill ships. The directory name and the frontmatter name must always match, and changing it would break customer installs at the load-trigger level.
 - Don't restate canonical facts in non-canonical skills. If you find yourself typing a canary string (`config.resolved_approvers`, `GET /pods/entities`, `import rego.v1`, etc.) outside its canonical owner, you're duplicating content — add a `Loads:` reference instead. `validate-skills.sh` will catch the duplicate.

@@ -40,6 +40,28 @@ Valid:
 - `vulnerability_count`
 - `reliability`
 
+The platform enforces key names matching <!-- facts:measure-name-pattern -->`^[A-Za-z_][A-Za-z0-9_]*$`<!-- /facts:measure-name-pattern -->.
+
+## Template shape
+
+A template is a tree of measures. Each node's `type` is one of <!-- facts:measure-types -->`section`, `metric`<!-- /facts:measure-types -->. A `section` groups children and has no value. A `metric` is a leaf whose `value` names the policy value's type, one of <!-- facts:measure-values -->`bool`, `number`, `string`, `array.string`, `array.object`, `regex`<!-- /facts:measure-values -->; the value itself lives in the policy. In a control's `spec.yaml`:
+
+```yaml
+policyTemplate:
+  measures:
+    - name: vulnerabilities
+      type: section
+      children:
+        - name: critical
+          type: section
+          children:
+            - name: maximum
+              type: metric
+              value: number
+```
+
+The examples below are policy data: the values those keys hold.
+
 ## Readability conventions
 
 The template should read as close to a sentence as possible. The user sees
@@ -115,5 +137,5 @@ attestation result is undefined behavior. Cross-check before publishing.
 
 - `writing-rego-rules` — the rule that consumes `data.*` from this
   template.
-- `using-fianu-best-practices` → FIANU.md §Controls > Creating a Policy
-  Template — for additional examples and rationale.
+- `using-fianu-best-practices` → FIANU.md §Controls > Creating a Policy Template
+  — for additional examples and rationale.

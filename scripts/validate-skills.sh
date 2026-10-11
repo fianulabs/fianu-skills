@@ -9,9 +9,28 @@
 #   5. Agent manifest: every skill named in manifests/agent-contexts.json resolves
 #      to an existing skills/<name>/SKILL.md.
 #
+#   6. Public-leak denylist over every tracked file.
+#
 # Exits non-zero on any violation.
+#
+#   sh scripts/validate-skills.sh --leaks FILE...   runs only the leak denylist,
+#                                                   over FILE (e.g. a PR body)
 
 set -eu
+
+# Internal references (check 6). Kept here so --leaks can use it alone.
+LEAKS='\.\./(core|fianu-cloud|controllers|entities-as-code|official-controls|fianu-plugins|documentation|controls|ui-fianu)\b'
+LEAKS="$LEAKS|role:internal|arn:aws:|svc\.cluster\.local|docs/superpowers|\bui-fianu/"
+LEAKS="$LEAKS|\bfianu-(dev|qa|prod|cloud)\b|\b(dictator|onboarder|fior)\b"
+LEAKS="$LEAKS|\b(pkg|external|server|cmd|internal)/[A-Za-z0-9_./-]*\.go\b"
+if [ "${1:-}" = "--leaks" ]; then
+    shift
+    if grep -nIE -- "$LEAKS" "$@"; then
+        echo "FAIL: internal references in $*" >&2
+        exit 1
+    fi
+    exit 0
+fi
 
 REPO_ROOT="$(cd -- "$(dirname -- "$0")/.." && pwd)"
 cd "$REPO_ROOT"
@@ -105,8 +124,15 @@ echo "$CANARIES" | while IFS="$TAB" read -r canary owner; do
     for d in $skill_dirs; do
         s="$d/SKILL.md"
         [ -f "$s" ] || continue
-        # Body = everything after the second `---` line.
-        body="$(awk 'NR>1 && /^---$/ {found=1; next} found' "$s")"
+        # Body = everything after the second `---` line, with generated
+        # facts regions stripped first — a region can legitimately list a
+        # canonical-home term (e.g. a Rego builtin) without restating it.
+        # One non-greedy, name-matched strip: a greedy `.*` would delete
+        # everything between two regions sharing a line (prose included),
+        # and an unmatched opening marker could never pair up to delete past
+        # it, so nothing after it would be hidden either.
+        body="$(awk 'NR>1 && /^---$/ {found=1; next} found' "$s" \
+            | perl -0pe 's/<!-- facts:([a-z0-9-]+) -->.*?<!-- \/facts:\1 -->//gs')"
         if printf '%s' "$body" | grep -qF -- "$canary"; then
             hits="$hits $s"
         fi
@@ -145,6 +171,26 @@ if [ -f "$MANIFEST" ]; then
             FAIL=1
         fi
     done
+fi
+
+# --- Check 6: public-repo leak denylist ---
+# This repo is public. Nothing in it may point at Fianu-internal repos, internal
+# roles, cloud accounts, cluster hostnames, or backend source files. Maintainer
+# provenance for these skills lives in the private fianulabs/skills repo.
+# Scans every tracked file except this script (which has to spell the patterns)
+# and the vendored provider docs (copied verbatim from the public provider repo;
+# fix leaks there, then re-sync).
+if git rev-parse --git-dir >/dev/null 2>&1; then
+    files="$(git ls-files | grep -vE '^scripts/validate-skills\.sh$|/references/provider-docs/')"
+else
+    files="$(find . -type f ! -path './.git/*' ! -path './scripts/validate-skills.sh' ! -path '*/references/provider-docs/*')"
+fi
+# shellcheck disable=SC2086 # tracked paths contain no whitespace
+leak_hits="$(printf '%s\n' $files | xargs grep -nIE -- "$LEAKS" 2>/dev/null || true)"
+if [ -n "$leak_hits" ]; then
+    echo "FAIL: internal references in the public repo:" >&2
+    printf '%s\n' "$leak_hits" >&2
+    FAIL=1
 fi
 
 if [ "$FAIL" -eq 0 ]; then

@@ -34,9 +34,9 @@ wire-level contract for that fallback is in
 ## Finding an endpoint
 
 `references/api-index.md` lists every externally reachable route as
-`METHOD  PATH  DEST  SERVICE  AUTH`.
+`METHOD  PATH  DEST  AUTH`.
 
-**Grep it. Never read it whole** — it is ~140KB and will crowd out the actual
+**Grep it. Never read it whole** — it is ~110KB and will crowd out the actual
 investigation.
 
 ```bash
@@ -58,7 +58,7 @@ Fianu has two names for every endpoint, and this library uses both:
 - **`DEST`** — the internal route the proxy forwards to on the owning service (`/controls/:path`). This is what the service's own handler registers.
 
 Most other skills in this library quote endpoints by **DEST**, because that is
-what the `../core` handlers are named. A few quote PATH. There is no reliable
+what the backend service handlers are named. A few quote PATH. There is no reliable
 way to tell which by looking, so:
 
 **When a path from another skill returns 404, grep the index for it before
@@ -189,17 +189,3 @@ contract.
 Just under half the routes in the index are `GET`. Prefer them; a wrong GET
 costs nothing, a wrong POST mutates a customer's compliance record.
 
-## Maintenance
-
-`references/api-index.md` is **generated** from the core repo's proxy config —
-`cmd/proxy/kodata/config/proxies/*/proxies.yaml`, which is what actually
-decides whether a route is externally reachable and what it admits on.
-
-```bash
-./scripts/gen-api-index.sh              # uses ../core, or $FIANU_CORE_REPO
-./scripts/gen-api-index.sh /path/to/core
-```
-
-Never hand-edit the index. Regenerate it at every `bump-version.sh`; the
-header stamps the core commit it was built from, so drift is visible at a
-glance.
