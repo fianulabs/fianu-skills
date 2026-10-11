@@ -4,7 +4,7 @@ name: validate
 # internal references (validate-skills.sh), checked for dangling bundle
 # pointers, stale facts and broken code blocks, and scanned for secrets.
 # Control evals need Fianu credentials, so they run in the private
-# fianulabs/skills repo on the PR that bumps its pin of this repo.
+# fianulabs/skills repo when it tags a release.
 on:
   pull_request:
   push:

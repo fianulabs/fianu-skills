@@ -57,7 +57,7 @@ A pointer dangles when its file is missing, its skill is not in the same entry p
 ## This repo is public
 
 Everything here ships to customers and is readable by anyone. `validate-skills.sh`
-fails on references to Fianu-internal repos, internal roles, cloud accounts,
+fails on references to Fianu-internal repos, cloud accounts,
 cluster hostnames, or backend source paths. Maintainer-only grounding (which
 backend file proves which claim) lives in the private `fianulabs/skills` repo's
 `PROVENANCE.md` — never add a "Maintenance" or "source of truth" section here.

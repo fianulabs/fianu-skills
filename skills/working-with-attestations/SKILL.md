@@ -123,31 +123,57 @@ To answer "list every control result for this app at this gitsha, with failing
 detail", do not fan out per attestation. Use the export endpoint, which returns
 the full raw note for each — see `working-with-asset-series`.
 
-## Manual attestation upload
+## Submitting evidence
 
-For controls with a manual / `api` event source (the `manual-attestation`
-classification in `parsing-framework-documents`), evidence is submitted
-directly rather than produced by a plugin:
+For requirements that need human-provided evidence (the `manual-attestation`
+classification in `parsing-framework-documents`), evidence is submitted to the
+control directly instead of being produced by a plugin. Fianu evaluates the
+control's policy against what you submit — **the caller never sets the
+result**.
+
+The control must allow it: evidence submission enabled in its configuration
+(`evidenceSubmissions` in the control spec). Otherwise the request is a 400
+whose message points at the control's evidence methodology settings.
 
 ```
-POST /internal/upload/:control_entity_key/attestations/:action     (multipart/form-data)
+POST /evidence/submit/:control_entity_key     (application/json or multipart/form-data)
 ```
 
-`:action` is `manual` for this flow. The multipart body carries a `payload`
-part (JSON) plus one part per evidence file (appended by filename):
+The proxy admits it on `role:internal:system:admin`, the tenant admin role
+(the `AUTH` column of the API index): call it as a tenant admin, or with a
+service account that holds that role.
 
 ```jsonc
 {
-  "attestation": { "result": "pass" },               // any result value above
-  "series":      { "commit": "<commit sha>" },        // the series point covered
-  "asset":       { "uuid": "<asset uuid>" },
-  "user":        { "uuid": "", "email": "", "name": "", "role": "" }
+  "series": { "commit": "<commit sha>" },   // required; one series point, e.g. {"tag": "v1.2.3"}
+  "asset":  { "key": "<asset key>", "type": "repository" },  // required; or "uuid"
+  "detail": { }                             // required; the evidence the policy evaluates
 }
 ```
 
-The submitting identity is carried in `user` and by the auth token. Quirk: the
-backing struct's user field has **no JSON tag**, so it marshals as `"User"` on
-the way out; case-insensitive decoding means `"user"` works on input.
+- `asset` also accepts `project` + `repository`, `repositoryId`, `sourceUri`,
+  `token`, `tokenUuid`. `key` matches case-insensitively, exact match first.
+  Only `type` is read here, not a `types` array.
+- **With files:** send `multipart/form-data` with the JSON above in a part named
+  `payload` and one part per file. Each file is signed, stored, and attached
+  to the attestation as an appendix, named after its part name; two parts with
+  the same name keep only the last.
+- Optional header `X-Fianu-Producer: <tool key>` names the tool that produced
+  the evidence; without it the source is `api`.
+- **Response:** 201 with the attestation note. A policy that cannot evaluate
+  the input still returns 201 — a closed attestation with an `error` block —
+  so check the note, not just the status.
+
+With the CLI (authenticates with `FIANU_CLIENT_ID` / `FIANU_CLIENT_SECRET`):
+
+```
+fianu submit evidence <control_entity_key> --input results.json --asset-type repository \
+  [--asset-key <key>] [--series commit=<sha>] [--appendix screenshot.png ...]
+```
+
+`--input` becomes `detail` (json, yaml, xml or junit via `--format`). The asset
+key and the commit series default from the git checkout. Each `--appendix`
+attaches a file.
 
 ## Agent finding summary
 

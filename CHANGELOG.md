@@ -8,16 +8,16 @@ to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 - Removed maintainer-only "Maintenance" source tables and internal repo pointers from skill bodies. Customer-facing facts are unchanged.
-- `api-index.md` drops routes that require an internal Fianu role (117 rows) and the owning-service column. Columns are now `METHOD  PATH  DEST  AUTH`.
-
+- `api-index.md` drops `/api/internal/` routes and the owning-service column. Columns are now `METHOD  PATH  DEST  AUTH`. Every role a route requires stays listed: all of them can be assigned to customers.
 - Skill content corrected against the control agent contract; Terraform provider docs re-synced (adds the `form`, `instance`, `platform`, `policy_exception`, `report_template` and `tool` resources and 13 data sources); `api-index.md` regenerated.
 - README lists all 27 skills.
+- `working-with-attestations`: "Submitting evidence" documents `POST /evidence/submit/:control_entity_key` and `fianu submit evidence` (policy-evaluated; gated by the control's `evidenceSubmissions` setting and the tenant admin role). Replaces the UI-only `/internal/upload` route. The canary moves with it.
 
 ### Added
 - Agent prompt bundles: `build-bundles.py` packs each `agent-contexts.json` entry point with every file its skills point at, and fails on a dangling pointer. `--root` and `--commit` build from a merged tree.
 - Generated facts: `facts/facts.json` (enums, Rego builtins, plugin schemas) rendered into `<!-- facts:... -->` regions by `render-facts.py`.
 - `check-code-blocks.py`: every rego, json and yaml block in a skill must parse.
-- `validate-skills.sh` fails on internal references (internal repos, roles, cloud accounts, backend source paths).
+- `validate-skills.sh` fails on internal references (internal repos, cloud accounts, backend source paths).
 - CI: `validate` workflow runs `validate-skills.sh` and a gitleaks secret scan on every PR.
 
 ## [v0.4.0] - 2026-07-30
