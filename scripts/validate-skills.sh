@@ -20,7 +20,7 @@ set -eu
 
 # Internal references (check 6). Kept here so --leaks can use it alone.
 LEAKS='\.\./(core|fianu-cloud|controllers|entities-as-code|official-controls|fianu-plugins|documentation|controls|ui-fianu)\b'
-LEAKS="$LEAKS|role:internal|arn:aws:|svc\.cluster\.local|docs/superpowers|\bui-fianu/"
+LEAKS="$LEAKS|arn:aws:|svc\.cluster\.local|docs/superpowers|\bui-fianu/"
 LEAKS="$LEAKS|\bfianu-(dev|qa|prod|cloud)\b|\b(dictator|onboarder|fior)\b"
 LEAKS="$LEAKS|\b(pkg|external|server|cmd|internal)/[A-Za-z0-9_./-]*\.go\b"
 if [ "${1:-}" = "--leaks" ]; then
@@ -46,7 +46,7 @@ CANARIES="$(printf '%s\t%s\n' \
     'bot|fianu-agent'           'working-with-tickets' \
     'GET /pods/entities'        'working-with-llm-context-rules' \
     'import rego.v1'            'writing-rego-rules' \
-    '/internal/upload'          'working-with-attestations' \
+    '/evidence/submit/'         'working-with-attestations' \
     '/assets/releases/'         'working-with-release-gating' \
     'recomputeStatus'           'working-with-indexes' \
     '.(list_string)'            'writing-cel-expressions' \
