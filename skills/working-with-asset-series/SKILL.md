@@ -172,10 +172,9 @@ POST /evidence/assets/by-series
 { "asset": "<asset uuid>", "seriesId": "<known value>", "associations": "true" }
 ```
 
-**`associations` is a JSON string, not a boolean.** Send `"true"`; sending
-`true` is a decode error → 400. (The web client sends a real boolean and is
-wrong; the backend pins the string behavior.) Only `seriesId` is
-required.
+**`associations` accepts a boolean or a quoted boolean** (`true` or `"true"`);
+absent, `null` and `""` mean false. Anything else is a decode error → 400. Only
+`seriesId` is required.
 
 Returns note refs with `seriesID` / `seriesCode` / `seriesName` / `seriesType`
 plus `associations[]` — i.e. the linked series values. Note the top-level key

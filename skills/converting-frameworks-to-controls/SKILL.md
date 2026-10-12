@@ -93,8 +93,8 @@ For each approved row in **New Controls to Create**, via
 `working-with-entities`:
 
 ```
-POST /create/control      → creates draft + opens approval ticket
-POST /create/policy       → creates default policy draft + opens approval ticket
+POST /request/control     → creates draft + opens approval ticket
+POST /request/policy      → creates default policy draft + opens approval ticket
 ```
 
 Controls are created in `draft` state. They are NOT published until the

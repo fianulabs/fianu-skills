@@ -47,13 +47,13 @@ $asset.path.(string).startsWith("apps/")
 ```
 `combineWith: OR` — an asset matching either is in scope.
 
-## Presence check (valueless operator)
+## List element match (exists)
 
 ```
-$asset.properties.data_classification.(string)
+$asset.labels.(list_string).exists(v, v.matches("^tier:"))
 ```
-Operator `exists` — no right-hand value. The expression is true when the
-field is set. Use `not_exists` for the inverse.
+Operator `exists` — true when any element of the list matches the pattern.
+Use `not_exists` for the inverse.
 
 ## Pin to a single asset and series point (exception scoping)
 
@@ -78,5 +78,5 @@ Friendly: `asset.properties.criticality GREATER THAN OR EQUAL 3`
 |---|---|---|
 | `asset.path == "x"` | No `$` sigil, no cast → parser `errVarType`, 400. | `$asset.path.(string) == "x"` |
 | `$asset.labels.contains.(string)("x")` | Cast after the method name. | `$asset.labels.(string).contains("x")` |
-| `$repository.path.(string) == "x"` | Per-type sigil rejected. | `$asset.path.(string) == "x"` |
+| `$repository.path.(string) == "x"` | Outside a repository scope this reads the path of the asset's repository ancestor, not the asset. | `$asset.path.(string) == "x"` |
 | `$asset.tags.(string).contains("x")` on a list field | Wrong cast for a list. | `$asset.tags.(list_string).contains("x")` |

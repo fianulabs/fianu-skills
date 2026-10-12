@@ -29,6 +29,8 @@ The list endpoint returns metadata for all `llm_context_rule` pods attached
 to the entity. The single-key endpoint returns the full pod including its
 markdown `content` field.
 
+The platform agent reads the rule stored under the key `default`.
+
 ## The parent walk
 
 If the target entity is a `policy` or `policy_exception`, also fetch the

@@ -8,7 +8,7 @@ description: Use when reasoning about Fianu entities, assets, hierarchy, or comp
 ## Overview
 
 This skill loads the authoritative Fianu domain reference (`references/FIANU.md`,
-905 lines) and acts as a topical navigator. When another skill needs to make
+913 lines) and acts as a topical navigator. When another skill needs to make
 a decision aligned with Fianu's domain model — entity hierarchy, asset taxonomy,
 policy layering semantics, control design rules, naming conventions — load this
 skill and jump to the relevant section of `references/FIANU.md`.

@@ -139,8 +139,8 @@ whose message points at the control's evidence methodology settings.
 POST /evidence/submit/:control_entity_key     (application/json or multipart/form-data)
 ```
 
-The proxy admits it on `role:internal:system:admin`, the tenant admin role
-(the `AUTH` column of the API index): call it as a tenant admin, or with a
+The proxy admits it for the tenant admin role (the `AUTH` column of the API
+index): call it as a tenant admin, or with a
 service account that holds that role.
 
 ```jsonc
