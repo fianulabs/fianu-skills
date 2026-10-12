@@ -29,8 +29,11 @@ Once a candidate plugin is chosen, discover its evidence schema:
 GET /controls/:entity_key/schemas?producer={pluginPath}
 ```
 
-The response lists the field paths and types available in the plugin's
-evidence output (the `input.detail.*` shape that Rego rules reference). Use
+`:entity_key` is an existing control; `producer` optionally filters that
+control's relations. The response is an array with one result per relation
+(`producerPath`, `relationPath`, `schema`, `sampleOutput`, `fields`) listing
+the field paths and types available in the plugin's evidence output (the
+`input.detail.*` shape that Rego rules reference). Use
 these field paths to write the Rego rule via `writing-rego-rules`.
 
 ## Selecting a plugin
@@ -56,7 +59,8 @@ Decision procedure:
 
 The catalog reflects what fianu-plugins ships; whether a specific tenant
 has the plugin enabled is a deployment question. Schema discovery against
-a non-enabled plugin will return an empty/404 response. In that case,
+a non-enabled plugin will return a per-relation `error` (HTTP 400 when every
+relation fails, 207 when only some do). In that case,
 escalate to a human or recommend enabling the plugin.
 
 ### Multiple plugins satisfying the same category

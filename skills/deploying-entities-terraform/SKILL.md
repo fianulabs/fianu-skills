@@ -275,7 +275,7 @@ use `expression` for their inline CEL — the key differs by surface. See
 `writing-cel-expressions`.
 
 **`fianu_index` — `kind` differs by surface.** The Terraform example sets
-`kind = "write-ahead"`; the YAML/CLI public deploy endpoint forces
+`kind = "write-ahead"`; the public index-create endpoint forces
 user-authored indexes to `kind: write` (see `deploying-entities-yaml`). Mixing
 surfaces on one index produces a `kind` diff on import.
 
@@ -365,7 +365,9 @@ manually.
 1. Provider builds the entity Go struct (`*entities.Control`, `*entities.Policy`, …) from HCL.
 2. JSON-marshals the struct.
 3. Base64-encodes the JSON into the `X-Fianu-Raw-Content` request header.
-4. POSTs an empty body to `/entities/artifacts/deploy`.
+4. POSTs a small JSON body (`general`: entity type, path, optional id and
+   version) to `/entities/artifacts/deploy`; the entity itself travels only in
+   the header.
 5. Server runs the SHA256 idempotency check. Unchanged input returns
    `action: "skipped"`; changed input drafts a new version and opens an
    approval ticket.

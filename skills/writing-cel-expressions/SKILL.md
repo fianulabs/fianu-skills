@@ -28,9 +28,10 @@ cast**:
 $asset.<field path>.(<type>)
 ```
 
-The cast is **not optional**. The backend's runtime CEL parser requires it;
-without it the parser returns `errVarType` and the whole policy-evaluation
-pipeline returns 400 ("stored expression fails compile").
+Write the cast always. The strict parser that validates policy criteria at
+deploy time requires it and otherwise returns `errVarType` (a 400). The runtime
+evaluator and the index translator are more lenient — an uncast reference
+defaults to `.(string)` — but that default is no help for non-string fields.
 The Fianu UI authors the cast form and persists it verbatim.
 
 | Cast | For |
@@ -40,8 +41,10 @@ The Fianu UI authors the cast form and persists it verbatim.
 | `.(int64)` / `.(int)` | integer fields |
 | `.(bool)` | boolean fields |
 
-- The primary asset is always `$asset`. The engine accepts `$asset.<field>`
-  and **rejects** per-type forms like `$repository.<field>`.
+- The primary asset is `$asset`. A per-type form like `$application.<field>` is
+  a **lineage** lookup — it reads the field from the asset's ancestor of that
+  type — except when the type is the scope's own asset type, where it means the
+  asset itself.
 - For string-method operators the cast sits **before** the method call:
   `$asset.labels.(string).contains("sox")` — never
   `$asset.labels.contains.(string)(…)`.
@@ -74,11 +77,11 @@ label:
 | `not_matches` | `!…​.matches( )` | Does not match |
 | `in` | `in` | In |
 | `not_in` | `!… in` | Not in |
-| `exists` | — | Exists |
-| `not_exists` | — | Does not exist |
+| `exists` | `.exists(v, v.matches( ))` | Exists |
+| `not_exists` | `!….exists(v, v.matches( ))` | Does not exist |
 
-- `exists` / `not_exists` are **valueless** — they take no right-hand operand.
-  Every other operator requires a value.
+- `exists` / `not_exists` apply to a `.(list_string)` field: true when some
+  element matches the pattern given as the value.
 - The string-method operators (`contains` / `startsWith` / `endsWith` /
   `matches`) and their negations apply to `.(string)` (or each element of a
   `.(list_string)`).
@@ -101,8 +104,7 @@ shorthand or `expressions[].expression` — see `deploying-entities-yaml`.
 ## Authoring workflow
 
 1. Pick the asset field and its type → choose the cast.
-2. Pick the operator from the table above; supply a value (unless it's
-   `exists` / `not_exists`).
+2. Pick the operator from the table above; supply a value.
 3. Assemble `$asset.<field>.(<cast>)` + operator + value, negating with `!`
    where needed.
 4. For multi-clause scopes, list the expressions and set `combineWith`.

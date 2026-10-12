@@ -91,7 +91,7 @@ server-controlled — the public deploy path forces user indexes to `write`;
 |---|---|---|
 | `F_72006` IndexReferenceNotFound | 404 | No index at that key. |
 | `F_72007` IndexReferenceArchived | 422 | Index exists but is archived. |
-| `F_72008` IndexRecomputeError | 503 | Members couldn't be computed. |
+| `F_72008` IndexRecomputeError | 422 | Members couldn't be computed (retriable; poll again). |
 | `F_40008` InvalidPreviewPagination | 400 | Bad `page`/`limit`. |
 
 ## Edge cases

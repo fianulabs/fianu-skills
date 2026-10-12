@@ -202,14 +202,13 @@ expressions use `expressions[].source`; policy/gate *criteria* use the singular
 combine field `combineWith` (camelCase, per the server struct tag), not
 `combine_with`.
 
-- `detail.kind` is **server-controlled** — the public deploy endpoint forces
+- `detail.kind` is **server-controlled** — the public index-create endpoint forces
   every user-authored index to `kind: write`. Leave it unset. `default`
   (the auto-managed per-asset-type catch-all) and `write-ahead` are
   reserved and cannot be set from source. Don't author `default.<asset_type>`
   catch-all indexes by hand; the server maintains one per active asset type.
-- CLI deploy of an index requires a server with the index deployer
-  registered. Against a server without it, the
-  deploy returns `deployer not registered for type index`.
+- `POST /entities/artifacts/deploy` rejects `index` as an unsupported entity
+  type; the server drives indexes through the typed `/entities/indexes` API.
 
 ## gate YAML — top-level shape
 

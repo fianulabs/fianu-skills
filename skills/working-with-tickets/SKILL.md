@@ -1,6 +1,6 @@
 ---
 name: working-with-tickets
-description: "Use when fetching ticket data (tickets, conditions, activities) or posting activities (comment, approved, denied). Establishes the auth-token actor pattern (never actor in body), the config.resolved_approvers lookup gotcha, and queue iteration."
+description: "Use when fetching ticket data (tickets, conditions, activities) or posting activities (comment, approve, deny). Establishes the auth-token actor pattern (never actor in body), the config.resolved_approvers lookup gotcha, and queue iteration."
 ---
 
 # Working with Tickets
@@ -28,7 +28,7 @@ ticket activity. Higher-level workflows like `analyzing-tickets` and
 | `description` | string | Ticket description |
 | `notes` | string | Additional notes |
 | `state` | string | `open` or `closed` |
-| `result` | string | `approved`, `rejected`, or empty (pending) |
+| `result` | string | `approved`, `rejected`, `cancelled`, or empty (pending) |
 | `targetEntityId` | string | Entity being approved |
 | `targetEntityType` | string | `control`, `policy`, `policy_exception`, `gate` |
 | `targetEntityPath` | string | Entity path (e.g. `security/sast`) |
@@ -45,7 +45,7 @@ ticket activity. Higher-level workflows like `analyzing-tickets` and
 | Field | Type | Description |
 |---|---|---|
 | `uuid` | string | Condition identifier |
-| `conditionType` | string | `approval`, `prerequisite`, `external_ticket`, `manual` |
+| `conditionType` | string | `approval`, `prerequisite`, `external_ticket`, `manual`, `gating`, `rule` |
 | `label` | string | Step label (e.g. "Manager Approval") |
 | `config` | object | JSONB config — contains `resolved_approvers` list and other settings |
 | `status` | string | `pending`, `satisfied`, `failed`, `waived`, `expired` |
@@ -78,7 +78,7 @@ this silently skip the approver check.
 |---|---|---|
 | `uuid` | string | Activity identifier |
 | `ticketUuid` | string | Parent ticket UUID |
-| `activityType` | string | `approved`, `denied`, `comment` |
+| `activityType` | string | `approve`, `deny`, `cancel`, `comment` |
 | `actor` | string | User sub who performed the action |
 | `actorUser` | object | User info (`username`, `email`, `firstName`, `lastName`) |
 | `body` | string | Free-text comment (nullable) |
@@ -92,8 +92,11 @@ this silently skip the approver check.
 
 ```
 GET /tickets
-  Query params: targetEntityId, targetEntityType, state (open|closed), result (approved|rejected)
-  Returns: Array of TicketReport with inline conditions
+  Query params: targetEntityId, targetEntityType, state (open|closed), result (approved|rejected),
+                view (created|assigned|all, default created), limit, page
+  Returns: Array of TicketReport with inline conditions. By default only
+           tickets created by the token's subject are returned; use
+           view=assigned for tickets where it is a resolved approver.
 
 GET /tickets/:uuid
   Returns: Full TicketReport with all conditions
@@ -112,8 +115,8 @@ GET /tickets/:uuid/conditions
 ```
 POST /tickets/:uuid/activities
   Body: {
-    "activityType": "approved" | "denied" | "comment",
-    "conditionId": "<uuid>",       // Required for approved/denied, optional for comment
+    "activityType": "approve" | "deny" | "cancel" | "comment",
+    "conditionId": "<uuid>",       // Required for approve/deny, optional for comment
     "body": "...",                  // Comment text (use this field, NOT "comment")
     "metadata": { ... }            // Optional JSONB for audit trail
   }
@@ -140,7 +143,7 @@ Authorization: Bearer <token-with-subject-bot|fianu-agent>
 Content-Type: application/json
 
 {
-  "activityType": "approved",
+  "activityType": "approve",
   "conditionId": "cond-456",
   "body": "Auto-approved by Fianu Agent. See analysis comment.",
   "metadata": { "decision": "approve", "autonomous": true }
@@ -156,7 +159,7 @@ have been ignored.
 For batch processing of open tickets:
 
 ```
-GET /tickets?state=open
+GET /tickets?state=open&view=assigned
 ```
 
 For each open ticket with no result:
@@ -173,8 +176,10 @@ For each open ticket with no result:
 - Wait 2 seconds between tickets to avoid API overload.
 - If any ticket processing fails, log the error and continue to the next ticket.
 
-Follow cursor pagination, as the using-fianu-skills skill describes, when
-iterating over more tickets than fit in one page.
+Use `limit` and `page` when iterating over more tickets than fit in one page.
+
+A ticket's creator cannot approve or deny their own ticket; the request is
+rejected.
 
 ## Edge cases
 
