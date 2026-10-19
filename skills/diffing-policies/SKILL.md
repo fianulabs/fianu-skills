@@ -81,6 +81,22 @@ Aggregate across all variations as before. Exception policies diff the
 same way; an exception's `effect: exempt` variation removed is a
 tightening (assets return to the standard policy).
 
+## Fetching the raw field diff
+
+The platform can produce the raw before/after diff for you:
+`GET /entities/compare/{base}..{head}`, where each side is an entity
+key, `key@version`, or a version UUID (e.g.
+`/entities/compare/<policy-key>@1.0.0..<policy-key>@1.1.0`). Pass
+`entityType` (or `baseEntityType` / `headEntityType`) to say what kind of
+entity each side is. The response carries `status` (`identical` or
+`different`), `additions`, `deletions`, a unified `patch`, and `changes[]`
+entries with a dot-bracket `path` (e.g. `variations[0].policy.version.pattern`)
+an `op` of `added`, `removed`, or `modified`, and `base` / `head` values.
+It also returns `baseDetail` / `headDetail`. The endpoint does not classify direction:
+apply the classification and aggregation above to `changes[]`. Related
+changes can be collapsed into one entry at a common subtree path, so
+descend into `baseDetail` / `headDetail` when you need the leaf values.
+
 ## Output format
 
 The diff produces a structured object the consumer iterates over:

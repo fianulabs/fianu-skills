@@ -172,10 +172,9 @@ POST /evidence/assets/by-series
 { "asset": "<asset uuid>", "seriesId": "<known value>", "associations": "true" }
 ```
 
-**`associations` is a JSON string, not a boolean.** Send `"true"`; sending
-`true` is a decode error → 400. (The web client sends a real boolean and is
-wrong; the backend pins the string behavior.) Only `seriesId` is
-required.
+**`associations` accepts a boolean or a quoted boolean.** Both `true` and
+`"true"` work; absent, `null` and `""` mean false, and any other value is a
+400. Only `seriesId` is required.
 
 Returns note refs with `seriesID` / `seriesCode` / `seriesName` / `seriesType`
 plus `associations[]` — i.e. the linked series values. Note the top-level key
@@ -189,7 +188,8 @@ GET /assets/:asset/attestations/export?commit=<git sha>
 
 **The parameter is `commit`, not `seriesId`.** Passing `seriesId` is silently
 ignored — the series predicate then binds an empty string and you get
-`attestations: []` with no error. Same for the POST form, whose body keys are
+`attestations: []` with no error. To narrow the GET form, repeat the `domain`
+and `control` query parameters. The POST form takes body keys
 `asset` / `commit` / `domains` / `controls`.
 
 The response is an **object**, not an array:

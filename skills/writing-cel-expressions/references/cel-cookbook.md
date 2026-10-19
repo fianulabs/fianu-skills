@@ -76,7 +76,7 @@ Friendly: `asset.properties.criticality GREATER THAN OR EQUAL 3`
 
 | Wrong | Why | Right |
 |---|---|---|
-| `asset.path == "x"` | No `$` sigil, no cast → parser `errVarType`, 400. | `$asset.path.(string) == "x"` |
+| `asset.path == "x"` | No `$` sigil or cast → fails to compile. | `$asset.path.(string) == "x"` |
 | `$asset.labels.contains.(string)("x")` | Cast after the method name. | `$asset.labels.(string).contains("x")` |
-| `$repository.path.(string) == "x"` | Per-type sigil rejected. | `$asset.path.(string) == "x"` |
+| `$repository.path.(string) == "x"` on a non-repository asset | Per-type sigil names an ancestor of that type, not the asset itself. | `$asset.path.(string) == "x"` |
 | `$asset.tags.(string).contains("x")` on a list field | Wrong cast for a list. | `$asset.tags.(list_string).contains("x")` |

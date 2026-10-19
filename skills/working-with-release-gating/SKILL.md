@@ -71,11 +71,25 @@ GET  /evidence/assets/release/:uuid/links/snapshot?project=results_only
 | Endpoint | Use |
 |---|---|
 | `POST /releases` | Create a release (a versioned bundle of assets to gate). |
-| `GET /assets/releases/:uuid/status` | The release's lifecycle state and per-gate results. States observed: `draft` \| `approved` \| `released` \| `failed`; `gates[].result` = `pass` \| `fail`. |
+| `GET /assets/releases/:uuid/status` | The release's lifecycle `status`, plus `releaseUuid`, `identifier`, the release's approval `tickets`, and an aggregate `approvalState` / `approvalResult` derived from them (both empty when no ticket exists). `:uuid` may also be the release identifier. The response carries no per-gate results — use the controls and snapshot endpoints for those. |
+| `PATCH /assets/releases/:uuid/status` | Change the release `status` (body `{ "status": … }`); authorization is approval-aware. |
 | `POST …/evidence/scan` | Trigger evidence collection for the release. |
 | `POST …/evidence/resync` | Re-pull evidence (e.g. after a late attestation lands). |
 | `POST …/evidence/modifiers` | Apply evidence modifiers (overrides / annotations) to the release. |
 | `GET /evidence/assets/release/:uuid/links/snapshot?project=results_only` | The release's assets with their controls and attestations — the data behind the per-asset pass/fail cards. |
+
+## Deployment protection
+
+Gates linked to an environment are also evaluated when a CI/CD system deploys
+to that environment; the verdict is posted back to the CI/CD system.
+
+- An active pause on a gate auto-passes it. Pauses are set with
+  `PATCH /gates/:key/pause`, not through the gate spec.
+- A gate with no usable check configuration is **enforced** for deployment
+  protection (it still runs and can block).
+- Gate errors fail closed: an errored gate counts as failed (it rejects the
+  deployment if enforced; an advisory gate does not block).
+- No gates linked, or none in scope for the asset, approves the deployment.
 
 ## Workflow — "is this release blocked?"
 

@@ -36,7 +36,7 @@ wire-level contract for that fallback is in
 `references/api-index.md` lists every externally reachable route as
 `METHOD  PATH  DEST  AUTH`.
 
-**Grep it. Never read it whole** — it is ~110KB and will crowd out the actual
+**Grep it. Never read it whole** — it is well over 100KB and will crowd out the actual
 investigation.
 
 ```bash

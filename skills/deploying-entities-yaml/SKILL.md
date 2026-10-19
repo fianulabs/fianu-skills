@@ -9,14 +9,16 @@ description: Use when authoring or deploying Fianu entities as on-disk YAML pack
 
 The YAML deploy path treats each entity as a directory or file on disk and
 ships it to the Fianu Console via the `fianu console` CLI. Controls,
-policies, exceptions, indexes, and gates all use the same plan / test /
+policies, exceptions, and gates all use the same plan / test /
 deploy workflow; they differ only in the files they package. The CLI
 auto-detects each entity's type from its root-level `type` field, so a
-single `deploy` pass can mix all five.
+single `deploy` pass can mix all four. Indexes can be authored as YAML
+files, but the deploy endpoint does not accept them (see the index
+section).
 
 Load this skill when an agent is authoring or editing on-disk entity
 packages. For the Terraform path, load `deploying-entities-terraform`. For
-the shared deploy semantics (idempotency, approval flow, format choice),
+the shared deploy semantics (idempotency, format choice),
 load the parent `deploying-entities-as-code`.
 
 ## Directory layout
@@ -71,7 +73,8 @@ typically differ per environment — lenient in dev, strict in prod.
 Exceptions use the same `enabled` + `detail.policy[]` + `criteria` shape as
 policies, with `type: "exception"` (both top-level and `detail.type`), a
 narrowing criteria block on every block, and **required**
-`expiration.timestamp` and `justification.message`.
+`justification.message` and an expiration (`expiration.timestamp`, which
+must be a future date, or `expiration.series`).
 
 ## spec.yaml — top-level shape
 
@@ -134,7 +137,7 @@ detail:
   justification:
     message: "<why this policy exists / why it changed>"   # REQUIRED
   expiration:
-    timestamp: "<RFC3339>"         # optional for standard; REQUIRED for exception
+    timestamp: "<RFC3339>"         # optional for standard; exception needs this or expiration.series; must be future
 ```
 
 **The YAML key is `detail.policy:`, not `detail.variations:`.** The server
@@ -202,14 +205,15 @@ expressions use `expressions[].source`; policy/gate *criteria* use the singular
 combine field `combineWith` (camelCase, per the server struct tag), not
 `combine_with`.
 
-- `detail.kind` is **server-controlled** — the public deploy endpoint forces
+- `detail.kind` is **server-controlled** — the public indexes API (`POST /indexes`) forces
   every user-authored index to `kind: write`. Leave it unset. `default`
   (the auto-managed per-asset-type catch-all) and `write-ahead` are
   reserved and cannot be set from source. Don't author `default.<asset_type>`
   catch-all indexes by hand; the server maintains one per active asset type.
-- CLI deploy of an index requires a server with the index deployer
-  registered. Against a server without it, the
-  deploy returns `deployer not registered for type index`.
+- `POST /entities/artifacts/deploy` rejects `index` with a 400
+  (`unsupported entity type: index`), so indexes are not deployed by
+  `fianu console deploy`. Create or update them through the indexes API
+  (see `working-with-indexes`) or Terraform `fianu_index`.
 
 ## gate YAML — top-level shape
 
@@ -259,7 +263,7 @@ fianu console test policies ./envs/dev/policies/
 # Show what would deploy (dry run; SHA256-compare to server state)
 fianu console plan ./envs/dev --project <project> --repository <repo>
 
-# Apply changes (creates drafts + opens approval tickets)
+# Apply changes (saves entities directly; no approval ticket)
 fianu console deploy ./envs/dev --project <project> --repository <repo>
 
 # Selective deploy
@@ -269,14 +273,14 @@ fianu console deploy ./envs/dev --gates
 ```
 
 The CLI dispatches each file to the right deployer from its root `type`,
-so controls, policies, exceptions, indexes, and gates deploy in one pass.
+so controls, policies, exceptions, and gates deploy in one pass.
 The `--controls` / `--policies` / `--gates` flags are optional hints for
 the legacy format where the root `type` is ambiguous; with `type` set on
 every file you don't need them.
 
 `--project` and `--repository` are **optional**: they tag deployed entities
 with a project / repository scope for organizing them and attributing the
-approval-ticket history:
+deploy:
 
 ```bash
 fianu console deploy ./envs/dev --project my-org --repository my-entities   # attributed
@@ -291,13 +295,16 @@ Pass them when you want the attribution; leave them off otherwise.
 
 1. Tars the entity directory.
 2. Multipart-POSTs to `/entities/artifacts/deploy`:
-   - `payload`: JSON metadata (entity type, path, project, repository).
+   - `payload`: JSON metadata (`general.entityType`, optional `general.path`,
+     optional `deploymentMode`: `none` default, `overwrite`, or `strict`).
    - `file`: binary tar archive.
+   - Project and repository attribution travel as the `X-Fianu-CI-Project` /
+     `X-Fianu-CI-Repository` headers; `plan` is the same call with `?dryRun=true`.
 3. Server's `BuildControlFromFiles` extracts the archive, constructs the
-   entity, runs the SHA256 idempotency check, then either drafts a new
-   version + opens an approval ticket or returns `action: "skipped"`.
+   entity, runs the SHA256 idempotency check, then either saves a new
+   version or returns `metadata.action: "skipped"`.
 
-Same endpoint, same idempotency, same approval flow as the Terraform path.
+Same endpoint and idempotency as the Terraform path.
 See `deploying-entities-as-code` for the shared semantics.
 
 ## Test fixture format
@@ -338,11 +345,11 @@ the mapper self-contained.
 dev → qa → prod, run the command three times against
 `envs/dev`, `envs/qa`, `envs/prod`. Controls SHA-match across envs and
 return `action: "skipped"`; policies typically differ and create new
-drafts in each env.
+versions in each env.
 
 ## See also
 
-- `deploying-entities-as-code` — picking a format, idempotency, approval flow.
+- `deploying-entities-as-code` — picking a format, idempotency.
 - `deploying-entities-terraform` — same entities, HCL surface.
 - `writing-rego-rules` — `rule.rego` authoring.
 - `writing-cel-expressions` — the CEL dialect for `criteria.expression` and index `source`.

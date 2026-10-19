@@ -28,7 +28,8 @@ ticket activity. Higher-level workflows like `analyzing-tickets` and
 | `description` | string | Ticket description |
 | `notes` | string | Additional notes |
 | `state` | string | `open` or `closed` |
-| `result` | string | `approved`, `rejected`, or empty (pending) |
+| `result` | string | `approved`, `rejected`, `cancelled`, or empty (pending) |
+| `relationship` | string | Set on list results: `creator` or `approver` — the caller's relationship to the ticket |
 | `targetEntityId` | string | Entity being approved |
 | `targetEntityType` | string | `control`, `policy`, `policy_exception`, `gate` |
 | `targetEntityPath` | string | Entity path (e.g. `security/sast`) |
@@ -48,6 +49,7 @@ ticket activity. Higher-level workflows like `analyzing-tickets` and
 | `conditionType` | string | `approval`, `prerequisite`, `external_ticket`, `manual` |
 | `label` | string | Step label (e.g. "Manager Approval") |
 | `config` | object | JSONB config — contains `resolved_approvers` list and other settings |
+| `resolvedApprovers` | string[] | The same approver list, promoted to a top-level field (empty array when none) |
 | `status` | string | `pending`, `satisfied`, `failed`, `waived`, `expired` |
 | `progress` | object | JSONB progress tracking |
 | `expiresAt` | timestamp | Optional expiration |
@@ -56,8 +58,9 @@ ticket activity. Higher-level workflows like `analyzing-tickets` and
 | `satisfiedBy` | string | User sub who satisfied it (null if pending) |
 | `satisfiedByUser` | object | User info for the satisfier |
 
-**Gotcha:** Approvers live inside `config.resolved_approvers`, NOT as a
-top-level field on the condition. The shape is:
+**Gotcha:** The approver list is snake_case `resolved_approvers` inside
+`config`, and camelCase `resolvedApprovers` at the top level of the condition.
+The `config` shape is:
 
 ```json
 {
@@ -69,8 +72,9 @@ top-level field on the condition. The shape is:
 }
 ```
 
-Reading `condition.resolved_approvers` returns `undefined` — agents that do
-this silently skip the approver check.
+Reading `condition.resolved_approvers` (snake_case, top level) returns
+`undefined` — agents that do this silently skip the approver check. Read
+`condition.resolvedApprovers` or `condition.config.resolved_approvers`.
 
 ### Activity (ActivityReport)
 
@@ -78,7 +82,7 @@ this silently skip the approver check.
 |---|---|---|
 | `uuid` | string | Activity identifier |
 | `ticketUuid` | string | Parent ticket UUID |
-| `activityType` | string | `approved`, `denied`, `comment` |
+| `activityType` | string | `approve`, `deny`, `cancel`, `comment` |
 | `actor` | string | User sub who performed the action |
 | `actorUser` | object | User info (`username`, `email`, `firstName`, `lastName`) |
 | `body` | string | Free-text comment (nullable) |
@@ -92,11 +96,20 @@ this silently skip the approver check.
 
 ```
 GET /tickets
-  Query params: targetEntityId, targetEntityType, state (open|closed), result (approved|rejected)
+  Query params: targetEntityId, targetEntityType, state (open|closed), result (approved|rejected),
+                view (created|assigned|all), page, limit
   Returns: Array of TicketReport with inline conditions
+
+GET /admin/tickets
+  Same filters, no user scoping. System admin only (403 otherwise).
 
 GET /tickets/:uuid
   Returns: Full TicketReport with all conditions
+  Access: system admin, the ticket's creator, or a resolved approver; otherwise denied.
+
+**Default scope:** `GET /tickets` returns only tickets **you created**
+(`view=created`). Use `view=assigned` for tickets awaiting your approval, or
+`view=all` for both.
 
 GET /tickets/:uuid/activities
   Query params: activityType, conditionId, actor
@@ -112,12 +125,21 @@ GET /tickets/:uuid/conditions
 ```
 POST /tickets/:uuid/activities
   Body: {
-    "activityType": "approved" | "denied" | "comment",
-    "conditionId": "<uuid>",       // Required for approved/denied, optional for comment
+    "activityType": "approve" | "deny" | "cancel" | "comment",
+    "conditionId": "<uuid>",       // Required for approve/deny, optional otherwise
     "body": "...",                  // Comment text (use this field, NOT "comment")
     "metadata": { ... }            // Optional JSONB for audit trail
   }
+  Returns: 201 { "message": "activity submitted" }
+
+POST /tickets/:uuid/refresh
+  Re-resolves the ticket's approvers against current permissions and returns
+  the refreshed TicketReport. Call it after an approval fails with F_30004
+  (approver state stale).
 ```
+
+The ticket's creator cannot `approve` or `deny` their own ticket (access
+denied); `cancel` and `comment` are allowed.
 
 ## The actor convention
 
@@ -140,7 +162,7 @@ Authorization: Bearer <token-with-subject-bot|fianu-agent>
 Content-Type: application/json
 
 {
-  "activityType": "approved",
+  "activityType": "approve",
   "conditionId": "cond-456",
   "body": "Auto-approved by Fianu Agent. See analysis comment.",
   "metadata": { "decision": "approve", "autonomous": true }
@@ -156,8 +178,10 @@ have been ignored.
 For batch processing of open tickets:
 
 ```
-GET /tickets?state=open
+GET /tickets?state=open&view=assigned
 ```
+
+Without `view=assigned` (or `all`) the list holds only tickets the caller created.
 
 For each open ticket with no result:
 
@@ -173,8 +197,8 @@ For each open ticket with no result:
 - Wait 2 seconds between tickets to avoid API overload.
 - If any ticket processing fails, log the error and continue to the next ticket.
 
-Follow cursor pagination, as the using-fianu-skills skill describes, when
-iterating over more tickets than fit in one page.
+Page with the `page` and `limit` query parameters when iterating over more
+tickets than fit in one page.
 
 ## Edge cases
 

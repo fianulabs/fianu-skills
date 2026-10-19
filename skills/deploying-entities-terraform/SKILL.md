@@ -275,7 +275,7 @@ use `expression` for their inline CEL — the key differs by surface. See
 `writing-cel-expressions`.
 
 **`fianu_index` — `kind` differs by surface.** The Terraform example sets
-`kind = "write-ahead"`; the YAML/CLI public deploy endpoint forces
+`kind = "write-ahead"`; the public indexes API (`POST /indexes`) forces
 user-authored indexes to `kind: write` (see `deploying-entities-yaml`). Mixing
 surfaces on one index produces a `kind` diff on import.
 
@@ -367,10 +367,10 @@ manually.
 3. Base64-encodes the JSON into the `X-Fianu-Raw-Content` request header.
 4. POSTs an empty body to `/entities/artifacts/deploy`.
 5. Server runs the SHA256 idempotency check. Unchanged input returns
-   `action: "skipped"`; changed input drafts a new version and opens an
-   approval ticket.
+   `action: "skipped"`; changed input saves a new version directly
+   (no approval ticket).
 
-Same endpoint, same idempotency, same approval flow as the CLI path. See
+Same endpoint and idempotency as the CLI path. See
 `deploying-entities-as-code` for the shared semantics.
 
 ## Import
@@ -390,7 +390,7 @@ carries its own `import.sh` example.
 
 ## See also
 
-- `deploying-entities-as-code` — picking a format, idempotency, approval flow.
+- `deploying-entities-as-code` — picking a format, idempotency.
 - `deploying-entities-yaml` — same entities, on-disk YAML surface.
 - `working-with-indexes` — the runtime API for the `fianu_index` entity.
 - `writing-cel-expressions` — the CEL dialect used in index / policy / gate criteria.

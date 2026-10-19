@@ -1,6 +1,6 @@
 ---
 name: deploying-entities-as-code
-description: Use when deploying Fianu entities from source — controls, policies, exceptions, gates, indexes — via either the `fianu console deploy` CLI (on-disk YAML packages) or the Terraform provider (`fianu_control`, `fianu_policy`, `fianu_gate`, `fianu_index`). Covers the shared `POST /entities/artifacts/deploy` endpoint, format parity, SHA256 content-hash idempotency, and how to choose between YAML and Terraform.
+description: Use when deploying Fianu entities from source — controls, policies, exceptions, gates — via either the `fianu console deploy` CLI (on-disk YAML packages) or the Terraform provider (`fianu_control`, `fianu_policy`, `fianu_gate`, `fianu_index`). Covers the shared `POST /entities/artifacts/deploy` endpoint, format parity, SHA256 content-hash idempotency, and how to choose between YAML and Terraform.
 ---
 
 # Deploying Entities as Code
@@ -21,21 +21,22 @@ identical `Control` / `Policy` / `Gate` rows and honour the same SHA256
 content-hash idempotency gate.
 
 Load this skill when an agent needs to author or apply entities from source.
-For the read side and the platform-API draft+approval-ticket flow, load
+For the read side and the platform-API create/request flow, load
 `working-with-entities` instead.
 
 ## What "deploy from source" means
 
 | Aspect | Source-deploy (this skill) | Platform-API write (`working-with-entities`) |
 |---|---|---|
-| Entrypoint | `POST /entities/artifacts/deploy` | `POST /create/control`, `POST /create/policy` |
+| Entrypoint | `POST /entities/artifacts/deploy` | `POST /request/control`, `POST /request/policy` |
 | Author surface | YAML package or Terraform HCL in a repo | JSON body in a single HTTP call |
-| Idempotency | SHA256 content hash; unchanged input → server returns `action: "skipped"` | None — every POST opens a new approval ticket |
-| Approval flow | Draft → approval ticket → published (same as API path) | Draft → approval ticket → published |
+| Idempotency | SHA256 content hash; unchanged input → server returns `action: "skipped"` | None — every POST opens a new approval ticket (`/request/*`); `/create/*` saves directly |
+| Approval flow | None — saved directly, like `POST /create/<type>` | `/request/<type>`: draft → approval ticket → published; `/create/<type>`: saved directly |
 | Typical caller | CI pipeline, Terraform apply | Agent reacting to a ticket or framework ingestion |
 
-Both paths end up in the same `draft` state and the same approval-ticket
-flow. The difference is only in how the bytes get to the server.
+Both source-deploy formats save the entity directly: no draft is parked
+and no approval ticket is opened. The difference between them is only in
+how the bytes get to the server.
 
 ## Supported entities (current)
 
@@ -45,18 +46,24 @@ flow. The difference is only in how the bytes get to the server.
 | `policy` | ✅ | ✅ `fianu_policy` | Full parity. |
 | `policy_exception` | ✅ (exception template) | ✅ via `fianu_policy` with `type = "exception"` | Same wire shape; CLI and provider treat exception as a policy subtype. |
 | `gate` | ✅ (`type: "gate"`) | ✅ `fianu_gate` | Full parity. Inline policy + pods; the CLI auto-detects the type from the file's root `type` field. |
-| `index` | ✅ (`type: "index"`) | ✅ `fianu_index` | Reusable CEL asset-scope. The CLI deploy requires a server with the index deployer registered; against a server without it, an index deploy returns `deployer not registered for type index`. |
+| `index` | ❌ | ✅ `fianu_index` | Reusable CEL asset-scope. `POST /entities/artifacts/deploy` does not accept `index`: it returns 400 `unsupported entity type: index`. Create or update indexes through the indexes API (see `working-with-indexes`). |
 | `environment` | ❌ | ⏳ v0.1.x `fianu_environment` | Neither path stable yet. |
 | `target` | ❌ | ⏳ v0.1.x `fianu_target` | Neither path stable yet. |
 | `collection` | ❌ | ⏳ v0.1.x `fianu_collection` | Neither path stable yet. |
+
+The deploy endpoint itself accepts more entity types than the CLI and
+provider expose above (it also accepts `environment`, `target`, and
+`collection`, among others). An unsupported type is rejected with a 400
+whose message lists every accepted type; read that list rather than
+assuming a fixed set.
 
 When the matrix isn't at parity for an entity type, the format choice is
 forced. Otherwise it's a workflow preference (see the picker below).
 
 On the CLI path, the entity type is auto-detected from each file's
-root-level `type` field (`control`, `policy`, `exception`, `index`,
-`gate`), so controls, policies, exceptions, indexes, and gates all deploy
-in a single `fianu console deploy` pass.
+root-level `type` field (`control`, `policy`, `exception`, `gate`), so
+controls, policies, exceptions, and gates deploy in a single
+`fianu console deploy` pass.
 
 ## Format-parity claim — what's actually identical
 
@@ -70,7 +77,7 @@ upload an entity:
   on the client, JSON-marshals it, base64-encodes the bytes into the
   `X-Fianu-Raw-Content` header, and POSTs.
 
-After ingress, both flow into `control_deployer.go` and produce the same
+After ingress, both flow into the same server-side deployer and produce the same
 entity row. A second deploy of an unchanged input — for either path —
 returns `action: "skipped"` from the server and zero diff on the client
 side (no Terraform plan, no CLI activity).
@@ -83,7 +90,7 @@ Are you in a repo that already uses one format?
 └─ no  → ask:
          ├─ Do you need an environment, target, or collection?
          │   └─ yes → Terraform (only path that exposes them; still ⏳ v0.1.x)
-         ├─ Is this a fresh entities-as-code repo with controls, policies, indexes, or gates?
+         ├─ Is this a fresh entities-as-code repo with controls, policies, or gates?
          │   └─ yes → YAML / CLI (closer to the official-controls layout, simpler authoring)
          └─ Are you already running Terraform for adjacent infra (Cognito, k8s, etc.)?
              └─ yes → Terraform (single apply pipeline, drift detection)
@@ -123,11 +130,10 @@ For format-specific details, see:
 
    `--project` / `--repository` are optional attribution tags — `entities-as-code`
    passes them, `official-controls` omits them. See `deploying-entities-yaml`.
-5. **Approval ticket handling.** Deploy creates entities in `draft` state.
-   The platform opens an approval ticket targeting each new/changed
-   entity. See `working-with-entities` § Write endpoints (drafts + approval
-   tickets) for the lifecycle, and `managing-ticket-approvals` for
-   autonomous approval workflows.
+5. **No approval ticket.** Deploy saves each new/changed entity directly
+   (the same path as `POST /create/<type>`), so no approval ticket is
+   opened. Approval gating applies to the `/request/<type>` API flow; see
+   `working-with-entities` § Write endpoints.
 
 ## Idempotency — what "unchanged" means
 
@@ -148,21 +154,27 @@ Things that always trigger a new version:
 - Renaming the entity path (this is a **replacement** in Terraform and a
   new entity in CLI — both treat path as immutable).
 
+## Deployment mode
+
+The deploy request carries an optional `deploymentMode`:
+
+- `none` (default): for an existing control or gate, a partial update that
+  merges the sent sections into the current entity; a new entity is created
+  in full. Other entity types are replaced in full.
+- `overwrite`: full replacement of the existing entity.
+- `strict`: full replacement, plus verification that the content matches
+  the source repository commit; requires `git.ref` and `git.contentPath`.
+
+Add `?dryRun=true` to validate without saving.
+
 ## Edge cases
-
-### Approval ticket not yet closed
-
-Deploy is asynchronous from approval. A second deploy of the same entity
-before the first ticket has been approved will succeed (creates a new
-draft) but produces a second approval ticket. To avoid ticket churn, wait
-for the first ticket to close, or coordinate via `managing-ticket-approvals`.
 
 ### Path rename
 
 Both formats treat the entity path as immutable. To rename, deploy a new
 entity at the new path and (separately) archive the old one. Terraform
 will mark the rename as a `forces replacement` plan; the CLI will create a
-second draft without touching the old entity.
+second entity without touching the old one.
 
 ### Drift between formats
 
