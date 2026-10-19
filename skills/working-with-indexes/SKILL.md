@@ -25,7 +25,7 @@ Response shapes are **client-observed**.
 ## Read endpoints
 
 ```
-GET /entities/indexes?entityStatus=&recomputeStatus=&assetTypePath=&indexType=&page=&limit=&includeArchived=
+GET /entities/indexes?entityStatus=&recomputeStatus=&assetTypePath=&indexType=&visibility=&includeHidden=&page=&limit=&includeArchived=
 GET /entities/indexes/:key?includeArchived=
 GET /entities/indexes/:key/members?page=&limit=
 GET /entities/indexes/:key/examine
@@ -33,7 +33,7 @@ GET /entities/indexes/:key/examine
 
 | Endpoint | Use |
 |---|---|
-| `GET /entities/indexes` | List/filter indexes. Filters: `entityStatus` (`active` \| `archived`), `recomputeStatus` (`current` \| `stale` \| `computing` \| `error`), `assetTypePath`, `indexType`, `includeArchived`. |
+| `GET /entities/indexes` | List/filter indexes. Filters: `entityStatus` (`active` \| `archived`), `recomputeStatus` (`current` \| `stale` \| `computing` \| `error`), `assetTypePath`, `indexType`, `includeArchived`, `visibility` (`public` \| `private`). Private (auto-created) indexes are hidden unless you pass `visibility=private` or `includeHidden=true`. |
 | `GET /entities/indexes/:key` | Fetch one (with its compute state). `:key` is a UUID **or** a path — the backend routes on `IsValidUUID`, so forward the segment unchanged. |
 | `GET /entities/indexes/:key/members` | The assets the worker has matched to this index (paged). |
 | `GET /entities/indexes/:key/examine` | Ops-triage detail. **Not** part of the user-facing surface — use only for debugging. |
@@ -42,13 +42,16 @@ GET /entities/indexes/:key/examine
 
 ```
 POST   /entities/indexes
+POST   /entities/indexes/:key/refresh
 PATCH  /entities/indexes/:key
 DELETE /entities/indexes/:key
 ```
 
 - `POST` body is the StandardEntity envelope (the same shape the entity
-  mappers produce). The backend currently **wraps the response** as
-  `{ "index": { … } }` — unwrap to get the bare entity.
+  mappers produce). `POST` and `PATCH` return the bare index entity (with its
+  compute state), not a wrapper.
+- `POST …/:key/refresh` forces an inline recompute and returns
+  `{ "status": "refreshed" }` (or `"raced"` if a worker got there first).
 - `DELETE` is a **soft-delete / archive**, not a hard delete.
 
 Like other entities, writes enter as drafts and open an approval ticket — see
@@ -91,7 +94,7 @@ server-controlled — the public deploy path forces user indexes to `write`;
 |---|---|---|
 | `F_72006` IndexReferenceNotFound | 404 | No index at that key. |
 | `F_72007` IndexReferenceArchived | 422 | Index exists but is archived. |
-| `F_72008` IndexRecomputeError | 503 | Members couldn't be computed. |
+| `F_72008` IndexRecomputeError | 422 | Members couldn't be computed. |
 | `F_40008` InvalidPreviewPagination | 400 | Bad `page`/`limit`. |
 
 ## Edge cases
@@ -99,9 +102,6 @@ server-controlled — the public deploy path forces user indexes to `write`;
 ### Draft preview pagination ignored
 If draft preview returns the wrong page, you sent pagination in the query
 string — it must be in the **body**.
-
-### Wrapped create/update response
-`POST` / `PATCH` return `{ index: { … } }`, not the bare entity. Unwrap.
 
 ### `:key` as UUID or path
 Both resolve. A path key does not need encoding beyond normal URL rules.

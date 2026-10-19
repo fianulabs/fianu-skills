@@ -29,9 +29,23 @@ Once a candidate plugin is chosen, discover its evidence schema:
 GET /controls/:entity_key/schemas?producer={pluginPath}
 ```
 
-The response lists the field paths and types available in the plugin's
-evidence output (the `input.detail.*` shape that Rego rules reference). Use
-these field paths to write the Rego rule via `writing-rego-rules`.
+`:entity_key` is an existing control; `producer` is optional and filters the
+control's relations by relation path. The response is an array with one entry
+per relation: `producerPath`, `relationPath`, `schema`, `sampleOutput`, and
+`fields` (each `{path, type, example}`), or an `error` block for a relation
+whose schema could not be fetched. The status is 200 when all succeed, 207 when
+some fail, and 400 when all fail. Use the field paths to write the Rego rule
+via `writing-rego-rules`.
+
+When no control exists yet, fetch a sample occurrence for a producer output
+path directly:
+
+```
+GET /plugins/:output_path/sample
+```
+
+It returns the same entry shape for that one output, built from the plugin's
+published schema with generated values.
 
 ## Selecting a plugin
 
@@ -54,9 +68,10 @@ Decision procedure:
 
 ### Plugin in catalog but not deployed in target environment
 
-The catalog reflects what fianu-plugins ships; whether a specific tenant
+The catalog reflects what Fianu ships; whether a specific tenant
 has the plugin enabled is a deployment question. Schema discovery against
-a non-enabled plugin will return an empty/404 response. In that case,
+a non-enabled plugin returns an `error` block on that relation (or a 404 from
+the sample endpoint). In that case,
 escalate to a human or recommend enabling the plugin.
 
 ### Multiple plugins satisfying the same category

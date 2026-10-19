@@ -28,10 +28,10 @@ cast**:
 $asset.<field path>.(<type>)
 ```
 
-The cast is **not optional**. The backend's runtime CEL parser requires it;
-without it the parser returns `errVarType` and the whole policy-evaluation
-pipeline returns 400 ("stored expression fails compile").
-The Fianu UI authors the cast form and persists it verbatim.
+Always write the cast. The strict CEL parser requires it and returns a
+variable-format error without it. Some evaluation paths default an un-cast
+reference to `.(string)`, so a missing cast on a bool or int field still fails
+at compile time. The Fianu UI authors the cast form and persists it verbatim.
 
 | Cast | For |
 |---|---|
@@ -40,13 +40,17 @@ The Fianu UI authors the cast form and persists it verbatim.
 | `.(int64)` / `.(int)` | integer fields |
 | `.(bool)` | boolean fields |
 
-- The primary asset is always `$asset`. The engine accepts `$asset.<field>`
-  and **rejects** per-type forms like `$repository.<field>`.
+- The asset being scoped is `$asset`. A `$<type>.<field>` prefix naming a
+  different asset type (for example `$application.name`) refers to that
+  asset's ancestor of that type in the hierarchy. A prefix naming the scoped
+  asset's own type refers to the asset itself.
 - For string-method operators the cast sits **before** the method call:
   `$asset.labels.(string).contains("sox")` — never
   `$asset.labels.contains.(string)(…)`.
 - Negate with a leading `!`: `!$asset.path.(string).matches("^x")`.
 - Series fields use the `$series` sigil: `$series.commit.(string) == '…'`.
+  `$series` fields (also `$asset.scm.ref.*` and `$asset.profile.*`) are bound
+  only at evaluation time, so they cannot be used in an index's expressions.
 
 > **Dialect note.** Some YAML examples in `deploying-entities-yaml` show an
 > un-cast shorthand (`asset.scm.repository == 'payments-app'`). The runtime

@@ -88,6 +88,7 @@ See `working-with-evidence-plugins` for plugin selection.
 POST /create/control            → saves the entity directly
 POST /create/policy             → saves the entity directly
 POST /create/policy_exception   → saves the entity directly
+POST /create/controls/gates     → saves the gate directly
 POST /request/control           → saves a draft + opens an approval ticket
 POST /request/policy            → saves a draft + opens an approval ticket
 POST /request/policy_exception  → saves a draft + opens an approval ticket
@@ -97,12 +98,16 @@ POST /request/gate              → saves a draft + opens an approval ticket
 Two distinct routes per type, not one:
 
 - `POST /create/<type>` persists the entity immediately. No approval ticket.
-  (`gate` has no `/create` route — every gate goes through `/request/gate`.)
+  A gate is created directly with `POST /create/controls/gates`, or
+  through `POST /request/gate` for the ticketed flow.
 - `POST /request/<type>` creates the entity in `draft` state and the
   platform automatically opens an approval ticket targeting it (the
   ticket's `targetEntityType` is `control`, `policy`, `policy_exception`,
   or `gate`). The entity is NOT `published` until a human (or agent via
   `managing-ticket-approvals`) approves the ticket.
+
+`PUT /request/<type>` (control, gate, policy, policy_exception) is the
+ticketed update form of the same route.
 
 Skills MUST NOT assume an entity is queryable as `published` immediately
 after a `/request/<type>` POST. If a downstream operation requires the

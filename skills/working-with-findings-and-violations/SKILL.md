@@ -76,7 +76,7 @@ GET /notes/:uuid?format=raw
 | Endpoint | Returns | Notes |
 |---|---|---|
 | `GET /evidence/assets/:asset/violations?seriesId=` | `assetViolationSnapshotV001[]` — each entry: `control` / `collection` / `domain` refs + one `attestation` (`uuid`, `result`, `status`, `timestamp`, `policyType`, `display`). | **`seriesId` is required** — 400 without it. Only attestations whose `display.violations.rows` is a non-empty array are returned. **Controls only** — gate attestations are excluded. A clean asset yields `[]` (never `null`). There is **no `branch` parameter** — the route ignores it; the web client sends one anyway. |
-| `GET /notes/:uuid/findings` | `findingsResponse` = `{ findings: Finding[], metadata: { producerTool, noteUUID, total } }`. | Requires plugin schema findings annotations — returns `{ findings: [] }` when absent. If `:uuid` is an attestation it resolves to the parent occurrence first. |
+| `GET /notes/:uuid/findings` | `findingsResponse` = `{ findings: Finding[], metadata: { producerTool, noteUUID, total, scanned } }`. | Requires plugin schema findings annotations — returns `{ findings: [] }` when absent. `metadata.scanned` is `true` when the plugin schema maps findings, so an empty list with `scanned: true` is a clean scan, while `scanned: false` means the plugin maps none and you should read the raw note. If `:uuid` is an attestation it resolves to the parent occurrence first. |
 | `GET /notes/:uuid?format=raw` | The complete note: `detail`, `display`, `policy`, `parent`. | Violation rows are at `$.display.violations.rows`. `format=raw` is required — the default `pretty` strips `display` to `{tag, color}`. |
 
 ## The Finding schema
