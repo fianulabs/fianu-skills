@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "core": "1e64e5bb33a2c7cecdaa789dc6478a4394fa3826",
+  "core": "a73c2069918995eb9392165340aba560025468fb",
   "measureTypes": [
     "section",
     "metric"
@@ -180,7 +180,9 @@
     }
   ],
   "regoRemoved": [
-    "http.send"
+    "http.send",
+    "net.lookup_ip_addr",
+    "opa.runtime"
   ],
   "producers": [
     {
@@ -533,6 +535,7 @@
       "relationPath": "ci.dependabot",
       "detailFields": [
         "alerts",
+        "enabled",
         "repository"
       ]
     },
@@ -564,7 +567,12 @@
       "plugin": "github-rulesets",
       "relationPath": "ci.github.repository_rulesets",
       "detailFields": [
-        "ruleSets"
+        "ruleSets",
+        "ruleSetsComplete",
+        "ruleSetsError",
+        "secrets",
+        "secretsComplete",
+        "secretsError"
       ]
     },
     {
@@ -572,6 +580,7 @@
       "relationPath": "ci.github.secret_scanning",
       "detailFields": [
         "alerts",
+        "enabled",
         "repository"
       ]
     },
