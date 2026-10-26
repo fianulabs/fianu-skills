@@ -142,26 +142,6 @@
       }
     },
     {
-      "name": "callExternalURL",
-      "decl": {
-        "args": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "string"
-          },
-          {
-            "type": "string"
-          }
-        ],
-        "result": {
-          "type": "any"
-        },
-        "type": "function"
-      }
-    },
-    {
       "name": "withoutExceptions",
       "decl": {
         "args": [
