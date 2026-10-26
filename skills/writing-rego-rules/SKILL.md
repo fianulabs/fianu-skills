@@ -38,7 +38,6 @@ Fianu builtins every rule can call:
 | `log` | 1 |
 | `fianu.record_violation` | 2 |
 | `loadAssets` | 2 |
-| `callExternalURL` | 3 |
 | `withoutExceptions` | 2 |
 <!-- /facts:rego-builtins -->
 Not available to policy code: <!-- facts:rego-removed -->`http.send`<!-- /facts:rego-removed -->.
