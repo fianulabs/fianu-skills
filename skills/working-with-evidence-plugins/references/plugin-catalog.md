@@ -37,12 +37,12 @@ can satisfy. Updated when new plugins ship.
 | `github-attestations` | `ci.github.attestations_https___cyclonedx.org_bom` | `mediaType`, `signature`, `statement`, `verifiedIdentity`, `verifiedTimestamps` |
 | `github-attestations` | `ci.github.attestations_https___slsa.dev_provenance_v1` | `mediaType`, `signature`, `statement`, `verifiedIdentity`, `verifiedTimestamps` |
 | `github-codeql` | `sast.codeql` | `alerts`, `analyses`, `repository` |
-| `github-dependabot` | `ci.dependabot` | `alerts`, `repository` |
+| `github-dependabot` | `ci.dependabot` | `alerts`, `enabled`, `repository` |
 | `github-dependency-review` | `ci.dependency.review` | `repository`, `results` |
 | `github-file-evidence` | `ci.github.file.evidence` | `files`, `metadata` |
 | `github-fileanalyzer` | `ci.github.repository_files` | `tree`, `workflows` |
-| `github-rulesets` | `ci.github.repository_rulesets` | `ruleSets` |
-| `github-secret-scanning` | `ci.github.secret_scanning` | `alerts`, `repository` |
+| `github-rulesets` | `ci.github.repository_rulesets` | `ruleSets`, `ruleSetsComplete`, `ruleSetsError`, `secrets`, `secretsComplete`, `secretsError` |
+| `github-secret-scanning` | `ci.github.secret_scanning` | `alerts`, `enabled`, `repository` |
 | `gitlab` | `ci.gitlab.commit` | `commit`, `commitDiff`, `mergeRequests`, `signature` |
 | `gitlab` | `ci.gitlab.pipeline.build.artifacts` | `asset`, `digest`, `id`, `name`, `properties`, `source`, `tags`, `type`, `version` |
 | `gitlab` | `ci.gitlab.pipeline` | `artifacts`, `branch`, `detailedStatus`, `duration`, `jobs`, `pipeline`, `snapshot`, `source`, `status`, `summary` |
