@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "fianu": {
+      "type": "http",
+      "url": "${FIANU_MCP_URL:-https://app.fianu.io/api/agent/mcp}",
+      "headersHelper": "fianu auth print-access-token --output headers"
+    }
+  }
+}

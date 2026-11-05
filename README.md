@@ -15,6 +15,12 @@ Installs as a plugin in Claude Code, Codex CLI, Gemini CLI, and GitHub Copilot C
 /plugin install fianu-skills@fianu-skills
 ```
 
+The plugin also registers the Fianu MCP server (`.mcp.json`). It signs in with
+the `fianu` CLI's stored login: install the [Fianu CLI](https://github.com/fianulabs/fianu),
+run `fianu auth login` once. The CLI renews the access token from the stored
+refresh token, so re-run login only when that refresh token expires. Set
+`FIANU_MCP_URL` to point at a different tenant gateway.
+
 ### Codex CLI
 
 ```

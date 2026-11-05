@@ -6,6 +6,10 @@ to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `.mcp.json` registers the Fianu MCP server for Claude Code, authenticated with the `fianu` CLI's stored login (`fianu auth print-access-token --output headers`).
+- `using-fianu-skills` routes to the `mcp__plugin_fianu-skills_fianu__*` tools first when present.
+
 ### Changed
 - Removed maintainer-only "Maintenance" source tables and internal repo pointers from skill bodies. Customer-facing facts are unchanged.
 - `api-index.md` drops `/api/internal/` routes and the owning-service column. Columns are now `METHOD  PATH  DEST  AUTH`. Every role a route requires stays listed: all of them can be assigned to customers.
