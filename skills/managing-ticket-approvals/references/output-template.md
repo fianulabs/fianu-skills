@@ -36,7 +36,7 @@ is set by the auth token — never in body.
 
 ```json
 {
-  "activityType": "approved",
+  "activityType": "approve",
   "conditionId": "<pending condition UUID>",
   "body": "Auto-approved by Fianu Agent (confidence: 0.94). See analysis comment above.",
   "metadata": {
@@ -52,7 +52,7 @@ is set by the auth token — never in body.
 
 ```json
 {
-  "activityType": "denied",
+  "activityType": "deny",
   "conditionId": "<pending condition UUID>",
   "body": "Denied by Fianu Agent. See analysis comment above.",
   "metadata": {

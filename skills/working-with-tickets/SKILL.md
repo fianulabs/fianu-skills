@@ -1,6 +1,6 @@
 ---
 name: working-with-tickets
-description: "Use when fetching ticket data (tickets, conditions, activities) or posting activities (comment, approved, denied). Establishes the auth-token actor pattern (never actor in body), the config.resolved_approvers lookup gotcha, and queue iteration."
+description: "Use when fetching ticket data (tickets, conditions, activities) or posting activities (comment, approve, deny). Establishes the auth-token actor pattern (never actor in body), the config.resolved_approvers lookup gotcha, and queue iteration."
 ---
 
 # Working with Tickets
@@ -28,7 +28,7 @@ ticket activity. Higher-level workflows like `analyzing-tickets` and
 | `description` | string | Ticket description |
 | `notes` | string | Additional notes |
 | `state` | string | `open` or `closed` |
-| `result` | string | `approved`, `rejected`, or empty (pending) |
+| `result` | string | `approved`, `rejected`, `cancelled`, or empty (pending) |
 | `targetEntityId` | string | Entity being approved |
 | `targetEntityType` | string | `control`, `policy`, `policy_exception`, `gate` |
 | `targetEntityPath` | string | Entity path (e.g. `security/sast`) |
@@ -78,7 +78,7 @@ this silently skip the approver check.
 |---|---|---|
 | `uuid` | string | Activity identifier |
 | `ticketUuid` | string | Parent ticket UUID |
-| `activityType` | string | `approved`, `denied`, `comment` |
+| `activityType` | string | `approve`, `deny`, `cancel`, `comment` |
 | `actor` | string | User sub who performed the action |
 | `actorUser` | object | User info (`username`, `email`, `firstName`, `lastName`) |
 | `body` | string | Free-text comment (nullable) |
@@ -92,8 +92,11 @@ this silently skip the approver check.
 
 ```
 GET /tickets
-  Query params: targetEntityId, targetEntityType, state (open|closed), result (approved|rejected)
+  Query params: targetEntityId, targetEntityType, state (open|closed), result,
+                view (created|assigned|all, default created)
   Returns: Array of TicketReport with inline conditions
+  Note: without view, only tickets the caller created are returned; use
+        view=assigned to see tickets where the caller is a resolved approver.
 
 GET /tickets/:uuid
   Returns: Full TicketReport with all conditions
@@ -112,8 +115,8 @@ GET /tickets/:uuid/conditions
 ```
 POST /tickets/:uuid/activities
   Body: {
-    "activityType": "approved" | "denied" | "comment",
-    "conditionId": "<uuid>",       // Required for approved/denied, optional for comment
+    "activityType": "approve" | "deny" | "cancel" | "comment",
+    "conditionId": "<uuid>",       // Required for approve/deny, optional for comment
     "body": "...",                  // Comment text (use this field, NOT "comment")
     "metadata": { ... }            // Optional JSONB for audit trail
   }
@@ -140,7 +143,7 @@ Authorization: Bearer <token-with-subject-bot|fianu-agent>
 Content-Type: application/json
 
 {
-  "activityType": "approved",
+  "activityType": "approve",
   "conditionId": "cond-456",
   "body": "Auto-approved by Fianu Agent. See analysis comment.",
   "metadata": { "decision": "approve", "autonomous": true }
@@ -156,8 +159,11 @@ have been ignored.
 For batch processing of open tickets:
 
 ```
-GET /tickets?state=open
+GET /tickets?state=open&view=assigned
 ```
+
+The server refuses an approve or deny from the ticket's creator, so an agent
+cannot decide a ticket it raised.
 
 For each open ticket with no result:
 

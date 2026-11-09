@@ -46,9 +46,9 @@ flow. The difference is only in how the bytes get to the server.
 | `policy_exception` | ✅ (exception template) | ✅ via `fianu_policy` with `type = "exception"` | Same wire shape; CLI and provider treat exception as a policy subtype. |
 | `gate` | ✅ (`type: "gate"`) | ✅ `fianu_gate` | Full parity. Inline policy + pods; the CLI auto-detects the type from the file's root `type` field. |
 | `index` | ✅ (`type: "index"`) | ✅ `fianu_index` | Reusable CEL asset-scope. The CLI deploy requires a server with the index deployer registered; against a server without it, an index deploy returns `deployer not registered for type index`. |
-| `environment` | ❌ | ⏳ v0.1.x `fianu_environment` | Neither path stable yet. |
-| `target` | ❌ | ⏳ v0.1.x `fianu_target` | Neither path stable yet. |
-| `collection` | ❌ | ⏳ v0.1.x `fianu_collection` | Neither path stable yet. |
+| `environment` | ❌ | ⏳ v0.1.x `fianu_environment` | Neither path stable yet. The deploy endpoint has a deployer registered for it. |
+| `target` | ❌ | ⏳ v0.1.x `fianu_target` | Neither path stable yet. The deploy endpoint has a deployer registered for it. |
+| `collection` | ❌ | ⏳ v0.1.x `fianu_collection` | Neither path stable yet. The deploy endpoint has a deployer registered for it. |
 
 When the matrix isn't at parity for an entity type, the format choice is
 forced. Otherwise it's a workflow preference (see the picker below).

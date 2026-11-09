@@ -32,6 +32,7 @@ load the parent `deploying-entities-as-code`.
 │   │   │   ├── rule_test.rego
 │   │   │   ├── detail.py           (optional)
 │   │   │   ├── display.py          (optional)
+│   │   │   ├── report.py           (optional, report template mapper)
 │   │   │   ├── input/*.json        (test fixtures)
 │   │   │   ├── data/*.json         (test policy fixtures)
 │   │   │   └── test/*.json         (test case definitions)
@@ -62,7 +63,7 @@ typically differ per environment — lenient in dev, strict in prod.
 
 | Entity | Files |
 |---|---|
-| `control` | `spec.yaml` + `contents.yaml` + `rule.rego` + (optional) `detail.py`, `display.py` + `input/*.json` + `data/*.json` + `test/*.json` |
+| `control` | `spec.yaml` + `contents.yaml` + `rule.rego` + (optional) `detail.py`, `display.py`, `report.py` + `input/*.json` + `data/*.json` + `test/*.json` |
 | `policy` | single YAML file, name format `f.<policy-path>.yaml`; `type: "policy"` |
 | `policy_exception` | single YAML file under `exceptions/`, name format `f.<exception-path>.yaml`; `type: "exception"` |
 | `index` | single YAML file, `type: "index"`; a reusable CEL asset-scope referenced by policy/gate criteria |

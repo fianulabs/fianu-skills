@@ -60,6 +60,22 @@ policyTemplate:
               value: number
 ```
 
+An `array.object` metric also needs a `keys` list: one entry per column, each
+with a `name` and a scalar `type` (`string`, `number`, or `bool`). Key names
+must be non-empty and unique, and `id` is reserved. `keys` is rejected on any
+other measure.
+
+```yaml
+- name: allowed_licenses
+  type: metric
+  value: array.object
+  keys:
+    - name: license
+      type: string
+    - name: approved
+      type: bool
+```
+
 The examples below are policy data: the values those keys hold.
 
 ## Readability conventions

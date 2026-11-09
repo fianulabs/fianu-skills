@@ -40,8 +40,9 @@ The Fianu UI authors the cast form and persists it verbatim.
 | `.(int64)` / `.(int)` | integer fields |
 | `.(bool)` | boolean fields |
 
-- The primary asset is always `$asset`. The engine accepts `$asset.<field>`
-  and **rejects** per-type forms like `$repository.<field>`.
+- The asset being scoped is `$asset`. A per-type form `$<assetType>.<field>`
+  (e.g. `$application.name`) addresses the lineage ancestor of that type, or
+  the asset itself when `<assetType>` is the scope's own asset type.
 - For string-method operators the cast sits **before** the method call:
   `$asset.labels.(string).contains("sox")` — never
   `$asset.labels.contains.(string)(…)`.

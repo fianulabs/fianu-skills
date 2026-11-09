@@ -53,7 +53,7 @@ one-line summary: "Direction: net relaxation".
 
 ## Variation-aware diffing
 
-Modern policies carry `detail.variations[]` rather than a single threshold
+Modern policies carry a variation list (`detail.policy[]` in YAML and JSON) rather than a single threshold
 block, so a naive whole-document key-path walk is wrong: variations are an
 ordered array, and matching them by array index reports spurious
 relax/tighten changes whenever a variation is inserted or reordered.
@@ -62,7 +62,7 @@ Diff variations like this:
 
 1. **Match by criteria identity, not array position.** Pair a `before`
    variation with the `after` variation whose `criteria` resolves to the
-   same scope (same `asset.type` + same `expressions`/`combine_with`, or
+   same scope (same `asset.type` + same `expressions`/`combineWith`, or
    the same `indexes` reference). An unmatched variation is `key_added` /
    `key_removed` (a whole tier appeared or disappeared).
 2. **Diff each matched variation's `policy` map** with the key-path method
