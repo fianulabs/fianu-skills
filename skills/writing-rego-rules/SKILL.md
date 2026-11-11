@@ -1,6 +1,6 @@
 ---
 name: writing-rego-rules
-description: "Use when authoring OPA Rego rules for Fianu controls. Covers v1 syntax (import rego.v1, if keyword), the input.detail.* ↔ data.* mapping, and the canonical patterns: threshold check, score comparison, presence check, freshness check, multi-metric."
+description: "Use when authoring OPA Rego rules for Fianu controls. Covers v1 syntax (import rego.v1, if keyword), the input.detail.* ↔ data.* mapping, and the canonical patterns: threshold check, score comparison, presence check, freshness check, multi-metric, list (ban / allow), exceptions."
 ---
 
 # Writing Rego Rules
@@ -55,7 +55,7 @@ schema alignment is the developer's responsibility.
 
 ## Patterns
 
-Five canonical patterns cover most Fianu controls. Full code for each
+Seven canonical patterns cover most Fianu controls. Full code for each
 lives in `references/patterns.md`; brief descriptions:
 
 - **Threshold check** — count something in evidence; pass if at or below a
@@ -69,6 +69,14 @@ lives in `references/patterns.md`; brief descriptions:
   defined time window. Example: SAST scan within the last 7 days.
 - **Multi-metric** — combine multiple sub-checks; pass only if all sub-checks
   pass. Example: code quality (reliability AND maintainability AND coverage).
+- **List (ban / allow)** — policy names items as `array.string`; fail on a
+  banned (or non-allowed) item, recording one violation per failing item;
+  `notFound` when the evidence lists no items. Example: prohibited
+  models in an AI-BOM.
+- **Exceptions** — every control that judges items subtracts an
+  `exceptions.<items>` list; a Fianu exception fills that list for the
+  assets it covers until it expires. `withoutExceptions` is the alternative
+  when items carry ids.
 
 See `references/patterns.md` for the full code of each pattern.
 

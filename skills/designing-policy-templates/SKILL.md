@@ -62,6 +62,36 @@ policyTemplate:
 
 The examples below are policy data: the values those keys hold.
 
+## Values only
+
+A template holds only values the user sets that change what the rule
+decides.
+
+- Lists of names are `array.string` (`models.banned`, `exceptions.models`).
+- Use `array.object` only when each item carries its own threshold.
+- Never metadata: no reason, owner, added-by, dates or advisory links. The
+  change's justification and the policy's version history hold those, and
+  per-item detail goes in the rule's violation.
+
+```yaml
+# Good
+models:
+  banned:
+    - meta-llama/Llama-2-7b-hf
+
+# Bad — nothing here but the name changes the decision
+models:
+  banned:
+    - name: meta-llama/Llama-2-7b-hf
+      reason: license
+      owner: risk-team
+      added: 2026-11-01
+```
+
+A control that judges items also takes an `exceptions.<items>` list. The
+list and exceptions patterns, with their templates, are in
+`writing-rego-rules` -> patterns.md §Exceptions.
+
 ## Readability conventions
 
 The template should read as close to a sentence as possible. The user sees
