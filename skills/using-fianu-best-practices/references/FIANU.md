@@ -436,6 +436,22 @@ It is recommended that controls not be named after the platform or tool iteslf. 
 
 On occasion, the control name and the type of platform or tool that performs the activity are the same. One example of this is SAST,  where the control name and the type of platform generating the evidence are the same. However this is uncommon and should not be common practice.
 
+###### Writing a Badge Tag
+
+A control's `display.py` returns a `tag`: the short label on the result badge beside the control's name. Like the name, the tag is a noun phrase, never a verb. It states the measurement in the unit the control counts, as a plural noun, so the badge reads the same way across every control: "2 critical vulnerabilities", "84% coverage", "1/60 hallucinations". A past-tense verb ("hallucinated", "blocked", "passed") narrates what happened instead of naming what was measured, and reads differently from every other badge.
+
+Count the thing the policy limits, the same thing the rule compares to the policy's value, so the badge and the policy speak about one quantity. Keep it short enough for the badge (about 25 characters) and leave the result out: the badge's colour already says pass or fail.
+
+| Avoid | Prefer |
+| ----- | ------ |
+| `1/60 hallucinated` | `1/60 hallucinations` |
+| `5/6 harmful blocked` | `1/6 jailbreaks` |
+| `92% covered` | `92% coverage` |
+| `3 tests failed` | `3 test failures` |
+| `Passed: 0 critical` | `0 critical vulnerabilities` |
+
+When there is nothing to measure, say what is missing, still as a noun: `no safety run`, `no SBOM`.
+
 ###### Choosing Sources
 
 Sources (sometimes referred to as "event sources") are the data feeds the supply Fianu with evidence that controls can use to evaluate against policy. Sources are designed to be event-driven, so from an architecture standpoint the data is queued in an event broker. Each event that reaches the broker is assigned an identified based on the source from which it originated. One-by-one events are pulled off of the queue and executed by each control that subscribes to that event's source. Essentially, by subscribing to an event source, a user has determined the type of evidence that the control will use to evaluate compliance. Controls must subscribe to at least one source, but there is no limit for how many sources a control can subscribe to. A challenge
