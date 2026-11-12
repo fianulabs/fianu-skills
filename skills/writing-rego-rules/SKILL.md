@@ -40,7 +40,7 @@ Fianu builtins every rule can call:
 | `loadAssets` | 2 |
 | `withoutExceptions` | 2 |
 <!-- /facts:rego-builtins -->
-Not available to policy code: <!-- facts:rego-removed -->`http.send`<!-- /facts:rego-removed -->.
+Not available to policy code: <!-- facts:rego-removed -->`http.send`, `net.lookup_ip_addr`, `opa.runtime`<!-- /facts:rego-removed -->.
 
 ## input ↔ data mapping
 
