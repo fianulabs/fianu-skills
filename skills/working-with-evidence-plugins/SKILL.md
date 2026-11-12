@@ -29,6 +29,11 @@ Once a candidate plugin is chosen, discover its evidence schema:
 GET /controls/:entity_key/schemas?producer={pluginPath}
 ```
 
+`:entity_key` must be an existing control, and the response covers only the
+relations (subscriptions) that control already has. `producer` filters them
+by plugin path, so a plugin the control does not subscribe to returns an
+empty list. Add the subscription to a draft control first.
+
 The response lists the field paths and types available in the plugin's
 evidence output (the `input.detail.*` shape that Rego rules reference). Use
 these field paths to write the Rego rule via `writing-rego-rules`.
@@ -44,7 +49,7 @@ Decision procedure:
 2. Map evidence type to a plugin category via `references/plugin-catalog.md`.
 3. If multiple plugins satisfy the category, prefer the plugin whose schema
    fields best cover the requirement (fewest gaps). Run schema discovery
-   for each candidate and compare.
+   for each candidate (subscribed on a control, see above) and compare.
 4. If no plugin in the catalog covers the evidence, recommend an
    **API-sourced control** (custom integration). The control subscribes to
    an `api` event source rather than a `plugin` source. See
@@ -56,7 +61,8 @@ Decision procedure:
 
 The catalog reflects what fianu-plugins ships; whether a specific tenant
 has the plugin enabled is a deployment question. Schema discovery against
-a non-enabled plugin will return an empty/404 response. In that case,
+a plugin that is not available returns per-relation errors: HTTP 400 when
+every relation failed, 207 when only some did, 200 when all succeeded. In that case,
 escalate to a human or recommend enabling the plugin.
 
 ### Multiple plugins satisfying the same category

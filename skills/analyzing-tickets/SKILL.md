@@ -26,7 +26,7 @@ English, so a human reviewer can make the decision faster.
 - No confidence scores — confidence belongs to `managing-ticket-approvals`.
 - No LLM context rules — those are autonomous-decision inputs.
 - No opinions — no "risky", "concerning", "warrants caution" language.
-- Always posts a `comment` activity, never `approved` or `denied`.
+- Always posts a `comment` activity, never `approve` or `deny`.
 
 If the goal is autonomous decision-making, load `managing-ticket-approvals`
 instead.

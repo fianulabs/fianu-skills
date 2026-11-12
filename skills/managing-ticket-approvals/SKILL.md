@@ -96,7 +96,7 @@ ALWAYS post the analysis comment (regardless of confidence). See
 `references/output-template.md`.
 
 If confidence ≥ threshold for autonomous action, ALSO post an
-`approved` / `denied` activity on the appropriate pending condition.
+`approve` / `deny` activity on the appropriate pending condition.
 See `working-with-tickets` for the submission contract (especially: the
 `actor` is set by the auth token, never the body).
 
