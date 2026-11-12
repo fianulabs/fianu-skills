@@ -95,7 +95,8 @@ approved base images.
   internal id).
 - Each failing item records one violation: the item, the version the
   evidence reports, and a one-line message.
-- Evidence that lists no items is `notFound`, not `fail`.
+- Evidence that lists no items of the listed kind is `notFound`, not `fail`.
+- `pass` counts the failing items themselves, not the recorded violations.
 
 CycloneDX AI-BOM example, failing on any banned model:
 
@@ -103,10 +104,13 @@ CycloneDX AI-BOM example, failing on any banned model:
 package rule
 import rego.v1
 default pass := false
-models contains {"name": sprintf("%s/%s", [c.group, c.name]), "version": c.version} if {
+models contains {"name": model_name(c), "version": object.get(c, "version", "")} if {
   some c in input.detail.components
   c.type == "machine-learning-model"
 }
+# CycloneDX makes group and version optional: a model missing either still counts.
+model_name(c) := sprintf("%s/%s", [c.group, c.name]) if c.group
+model_name(c) := c.name if not c.group
 prohibited contains m if {
   some m in models
   m.name in data.models.banned
@@ -116,8 +120,8 @@ violations contains m.name if {
   some m in prohibited
   fianu.record_violation(false, {"model": m.name, "version": m.version, "message": sprintf("%s %s is a prohibited model", [m.name, m.version])})
 }
-notFound if not input.detail.components
-pass if { input.detail.components; count(violations) == 0 }
+notFound if count(models) == 0
+pass if { count(models) > 0; count(prohibited) == 0 }
 ```
 
 For an allow list, swap the membership test in `prohibited` to
