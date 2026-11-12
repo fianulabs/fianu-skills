@@ -39,6 +39,7 @@ you need:
 | Designing a control (one-vs-many evaluations) | `#### Controls > Designing a Control` |
 | Creating a policy template (key syntax + readability examples) | `#### Controls > Creating a Policy Template` |
 | Naming a control (do not name after vendors) | `#### Controls > Naming a Control` |
+| Writing a badge tag (`display.py` `tag`: nouns, not past-tense verbs) | `#### Controls > Writing a Badge Tag` |
 | Choosing event sources (Plugin / API / Control) | `#### Controls > Choosing Sources` |
 | Control scope (repository / module / artifact / release / abstract) | `#### Controls > Control Scope` |
 | Policy layering semantics + override operator | `##### Policy Layering` |
