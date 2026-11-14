@@ -8,7 +8,7 @@ description: "Use when investigating anything on the Fianu platform that no othe
 ## Overview
 
 Every other skill in this plugin documents the handful of endpoints it owns.
-That is a small slice of the platform — the proxy exposes roughly 900 routes.
+That is a small slice of the platform — the proxy exposes roughly 1,000 routes.
 When an investigation needs a path no skill documents, the answer is not to
 guess a URL or to stop: it is to look the route up in the index here and call
 it with `fianu api`.
@@ -36,7 +36,7 @@ wire-level contract for that fallback is in
 `references/api-index.md` lists every externally reachable route as
 `METHOD  PATH  DEST  AUTH`.
 
-**Grep it. Never read it whole** — it is ~110KB and will crowd out the actual
+**Grep it. Never read it whole** — it is ~130KB and will crowd out the actual
 investigation.
 
 ```bash

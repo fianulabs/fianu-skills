@@ -28,9 +28,11 @@ cast**:
 $asset.<field path>.(<type>)
 ```
 
-The cast is **not optional**. The backend's runtime CEL parser requires it;
-without it the parser returns `errVarType` and the whole policy-evaluation
-pipeline returns 400 ("stored expression fails compile").
+Always write the cast. The strict CEL parser requires it; without it the
+parser returns `errVarType` and the whole policy-evaluation
+pipeline returns 400 ("stored expression fails compile"). Some evaluators
+default a cast-less reference to `.(string)`, but `bool` and numeric fields
+must always carry an explicit cast.
 The Fianu UI authors the cast form and persists it verbatim.
 
 | Cast | For |
