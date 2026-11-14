@@ -44,7 +44,7 @@ flow. The difference is only in how the bytes get to the server.
 | `control` | ✅ | ✅ `fianu_control` | Full parity. |
 | `policy` | ✅ | ✅ `fianu_policy` | Full parity. |
 | `policy_exception` | ✅ (exception template) | ✅ via `fianu_policy` with `type = "exception"` | Same wire shape; CLI and provider treat exception as a policy subtype. |
-| `gate` | ✅ (`type: "gate"`) | ✅ `fianu_gate` | Full parity. Inline policy + pods; the CLI auto-detects the type from the file's root `type` field. |
+| `gate` | ✅ (`type: "gate"`) | ✅ `fianu_gate` | Full parity. Inline policy + gate checks; the CLI auto-detects the type from the file's root `type` field. |
 | `index` | ✅ (`type: "index"`) | ✅ `fianu_index` | Reusable CEL asset-scope. The CLI deploy requires a server with the index deployer registered; against a server without it, an index deploy returns `deployer not registered for type index`. |
 | `environment` | ❌ | ⏳ v0.1.x `fianu_environment` | Neither path stable yet. The deploy endpoint has a deployer registered for it. |
 | `target` | ❌ | ⏳ v0.1.x `fianu_target` | Neither path stable yet. The deploy endpoint has a deployer registered for it. |

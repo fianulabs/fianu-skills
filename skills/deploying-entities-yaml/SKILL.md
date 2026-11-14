@@ -67,7 +67,7 @@ typically differ per environment — lenient in dev, strict in prod.
 | `policy` | single YAML file, name format `f.<policy-path>.yaml`; `type: "policy"` |
 | `policy_exception` | single YAML file under `exceptions/`, name format `f.<exception-path>.yaml`; `type: "exception"` |
 | `index` | single YAML file, `type: "index"`; a reusable CEL asset-scope referenced by policy/gate criteria |
-| `gate` | single YAML file, `type: "gate"`; bundles required controls/gates into a composite decision, with inline policy + pods |
+| `gate` | single YAML file, `type: "gate"`; bundles required controls/gates into a composite decision, with inline policy + `gate.checks` |
 
 Exceptions use the same `enabled` + `detail.policy[]` + `criteria` shape as
 policies, with `type: "exception"` (both top-level and `detail.type`), a
@@ -230,16 +230,18 @@ detail:
         # criteria / required_gates / effect optional — same shape as a policy variation
     override:
       asset: { types: [repository] }
-  pods:                            # pipeline-automation rules
-    - key: "default"
-      protection_level: "enforce"  # enforce (block on failure) | check (report only)
+  gate:
+    enabled: true                  # master switch; omitted means OFF
+    checks:                        # pipeline-automation rules
+      - name: "default"
+        protectionLevel: "enforce" # enforce (block on failure) | check (report only)
 ```
 
 A gate bundles `required_controls` (and chained `required_gates`) into one
 composite pass/fail. The inline `policy` carries the requirements; the
 server materialises it as a separate `policy` entity whose `control.path`
 references the gate, so a gate with no policy enforces nothing.
-`pods[].matching[]` carries per-scope `protection_level` overrides using
+`gate.checks[].matching[]` carries per-scope `protectionLevel` overrides using
 the same CEL/index criteria shape (most-restrictive wins: `enforce` >
 `check`).
 
@@ -314,9 +316,10 @@ an expected result:
 }
 ```
 
-Valid `expectedResult` values: `pass`, `fail`, `notRequired`, `notFound`.
-The `notRequired` / `notFound` results take priority over `pass` / `fail`
-in the rule output — see `writing-rego-rules` for the priority rules.
+`expectedResult` is compared to the rule's resolved result as the attestation
+result vocabulary spells it (e.g. `not required`, `not found`, `in progress`
+with spaces; see `working-with-attestations`). When several result booleans
+are set, a fixed precedence picks one — see `writing-rego-rules`.
 
 ## Edge cases
 
