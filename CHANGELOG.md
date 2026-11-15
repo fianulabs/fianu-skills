@@ -7,6 +7,7 @@ to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- `designing-reports` (Group C): composing a report document like a designer. Verdict sentence first, one question per section, the block for each data job (`lede`, `verdict-hero`, `kpi-row`, `status-matrix`, `trend-chart`, `bar-list`, `timeline`, `data-table` last as evidence, `callout` for empty states), every number bound to `$data`, status words, short commits and print rules, with three worked examples. Section 8 adapts Anthropic's Apache-2.0 `frontend-design` skill.
 - `.mcp.json` registers the Fianu MCP server for Claude Code, authenticated with the `fianu` CLI's stored login (`fianu auth print-access-token --output headers`).
 - `using-fianu-skills` routes to the `mcp__plugin_fianu-skills_fianu__*` tools first when present.
 
@@ -14,7 +15,7 @@ to [Semantic Versioning](https://semver.org/).
 - Removed maintainer-only "Maintenance" source tables and internal repo pointers from skill bodies. Customer-facing facts are unchanged.
 - `api-index.md` drops `/api/internal/` routes and the owning-service column. Columns are now `METHOD  PATH  DEST  AUTH`. Every role a route requires stays listed: all of them can be assigned to customers.
 - Skill content corrected against the control agent contract; Terraform provider docs re-synced (adds the `form`, `instance`, `platform`, `policy_exception`, `report_template` and `tool` resources and 13 data sources); `api-index.md` regenerated.
-- README lists all 27 skills.
+- README lists all 28 skills.
 - `working-with-attestations`: "Submitting evidence" documents `POST /evidence/submit/:control_entity_key` and `fianu submit evidence` (policy-evaluated; gated by the control's `evidenceSubmissions` setting and the tenant admin role). Replaces the UI-only `/internal/upload` route. The canary moves with it.
 
 ### Added
