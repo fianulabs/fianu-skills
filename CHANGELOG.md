@@ -12,6 +12,7 @@ to [Semantic Versioning](https://semver.org/).
 - `using-fianu-skills` routes to the `mcp__plugin_fianu-skills_fianu__*` tools first when present.
 
 ### Changed
+- `api-index.md` regenerated; routes marked deprecated at the gateway are no longer listed. Removed: `GET /api/applications` (use `GET /api/assets?assetType=application`), `POST /api/applications` (use `POST /api/assets`), `PATCH /api/applications/:uuid` (use `PUT /api/assets/:asset_uuid`), `POST /api/create/applications` (use `POST /api/assets`), `GET /api/entities/applications/:code` and its alias `GET /api/applications/:code` (use `GET /api/assets?assetType=application&identifier=<code>`). These routes still answer, with a `Deprecation` header.
 - Removed maintainer-only "Maintenance" source tables and internal repo pointers from skill bodies. Customer-facing facts are unchanged.
 - `api-index.md` drops `/api/internal/` routes and the owning-service column. Columns are now `METHOD  PATH  DEST  AUTH`. Every role a route requires stays listed: all of them can be assigned to customers.
 - Skill content corrected against the control agent contract; Terraform provider docs re-synced (adds the `form`, `instance`, `platform`, `policy_exception`, `report_template` and `tool` resources and 13 data sources); `api-index.md` regenerated.
