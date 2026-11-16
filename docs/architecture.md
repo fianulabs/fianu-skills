@@ -1,6 +1,6 @@
 # Architecture
 
-`fianu-skills` ships 27 skills in 5 groups. Orchestrator skills (Group D) are the entry points an agent typically loads first; they declare their dependencies via `## Loads:` and the agent loads each one in turn.
+`fianu-skills` ships 28 skills in 5 groups. Orchestrator skills (Group D) are the entry points an agent typically loads first; they declare their dependencies via `## Loads:` and the agent loads each one in turn.
 
 ## Skill groups
 
@@ -26,7 +26,7 @@
 | `working-with-asset-series` | **Foundation for every evidence query.** The series catalog (`digest`/`uri`/`commit`/`tag`/`release`/`timestamp`/`period_*` + codes), the four series axes, the snapshot + `export` endpoints, cross-series `associations`, and series discovery. Canonical home for "a control is missing from my results". |
 | `working-with-findings-and-violations` | Read violations/findings/vulnerabilities off an asset or note (`/evidence/assets/:asset/violations`, `/notes/:uuid/findings`, raw note) + the normalized `Finding` schema. Owns the violations-vs-findings pipeline distinction. Loads `working-with-asset-series`. |
 
-### Group C — Logic primitives (8)
+### Group C — Logic primitives (9)
 
 | Skill | Purpose |
 |---|---|
@@ -34,6 +34,7 @@
 | `computing-decision-confidence` | Confidence gate thresholds (0.50 / 0.75 / 0.90), 0.70 cap, ambiguity rule. |
 | `writing-rego-rules` | OPA v1 patterns: threshold / score / presence / freshness / multi-metric. |
 | `designing-policy-templates` | YAML template key syntax and readability conventions. |
+| `designing-reports` | Composing a report document: verdict first, the block for each data job, every number bound to `$data`, status words, print rules. Three worked examples in `references/`. |
 | `placing-entities-in-hierarchy` | Domain + collection selection by framework keywords. |
 | `matching-existing-controls` | Similarity scoring + thresholds for reuse vs. new-control. |
 | `parsing-framework-documents` | Framework document → normalized requirements + classification. |
