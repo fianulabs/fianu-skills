@@ -48,8 +48,8 @@ The canonical spellings use **spaces**, not underscores. The camelCase forms
 `notRequired` / `notFound` also appear in rule output and some payloads —
 normalize before comparing.
 
-`not required` / `not found` take priority over `pass` / `fail` in rule output
-(see `writing-rego-rules`). Payloads also carry an execution `status`, a
+When a rule sets more than one result, `pass` wins over `not required` /
+`not found`, and `fail` is the last resort (see `writing-rego-rules`). Payloads also carry an execution `status`, a
 separate three-value set: `complete` | `initiated` | `error`. An attestation with
 **`annotations` > 0** is treated as excused — a non-`pass` result with an
 annotation is rolled up as passing by the gate (see

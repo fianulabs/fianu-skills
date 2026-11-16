@@ -47,8 +47,8 @@ DELETE /entities/indexes/:key
 ```
 
 - `POST` body is the StandardEntity envelope (the same shape the entity
-  mappers produce). The backend currently **wraps the response** as
-  `{ "index": { … } }` — unwrap to get the bare entity.
+  mappers produce). `POST` and `PATCH` return the bare index with its compute
+  state, the same shape as `GET /entities/indexes/:key`.
 - `DELETE` is a **soft-delete / archive**, not a hard delete.
 
 Like other entities, writes enter as drafts and open an approval ticket — see
@@ -99,9 +99,6 @@ server-controlled — the public deploy path forces user indexes to `write`;
 ### Draft preview pagination ignored
 If draft preview returns the wrong page, you sent pagination in the query
 string — it must be in the **body**.
-
-### Wrapped create/update response
-`POST` / `PATCH` return `{ index: { … } }`, not the bare entity. Unwrap.
 
 ### `:key` as UUID or path
 Both resolve. A path key does not need encoding beyond normal URL rules.
