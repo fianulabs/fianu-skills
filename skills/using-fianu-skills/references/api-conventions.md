@@ -52,28 +52,29 @@ include `"actor": "..."` in the request body. See
 
 ## Error response shape
 
-Errors follow:
+Errors are a flat JSON object (not nested under `error`):
 
 ```json
-{ "error": { "code": "NOT_FOUND", "message": "ticket not found" } }
+{ "error": "ticket not found", "error_id": "...", "code": "F_71001", "message": "ticket not found", "detail": "...", "service": "console" }
 ```
 
-Common codes:
+`code` is a registry code of the form `F_<number>`, not a status name; branch
+on the HTTP status.
 
-- `400 BAD_REQUEST` — schema validation failed
-- `401 UNAUTHORIZED` — token missing or expired
-- `403 FORBIDDEN` — actor lacks permission
-- `404 NOT_FOUND` — referenced entity does not exist
-- `409 CONFLICT` — version conflict on entity update
-- `422 UNPROCESSABLE_ENTITY` — semantic validation failed (e.g. policy fails template schema)
+- `400` — schema validation failed
+- `401` — token missing or expired
+- `403` — actor lacks permission
+- `404` — referenced entity does not exist
+- `409` — version conflict on entity update
+- `422` — semantic validation failed (e.g. policy fails template schema)
 
 ## Pagination
 
-List endpoints use cursor pagination:
+List endpoints page with `limit` and `page` query parameters:
 
 ```
-GET /tickets?limit=50&cursor=<opaque>
+GET /tickets?limit=50&page=2
 ```
 
-Response includes `nextCursor` if more results exist. Skills MUST follow
+Keep requesting the next `page` until a page comes back short or empty. Skills MUST follow
 pagination when iterating (e.g. the `analyzing-tickets` queue loop).

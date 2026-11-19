@@ -78,5 +78,5 @@ The user message identifies the subject (`attestation`, `finding`, `violation`, 
 
 This skill is atomic — it loads nothing. The endpoint that fetches and
 regenerates this finding summary lives in `working-with-attestations`
-(`/agent/notes/attestations/:uuid/findings/:id/summarize`); load that skill
+(`/agent/notes/attestations/:uuid/findings/:finding_id/summarize`); load that skill
 when you need the call, not the output contract.
