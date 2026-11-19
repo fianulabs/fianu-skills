@@ -70,7 +70,9 @@ top-level field on the condition. The shape is:
 ```
 
 Reading `condition.resolved_approvers` returns `undefined` — agents that do
-this silently skip the approver check.
+this silently skip the approver check. Ticket reads also promote the same list
+to a camelCase `resolvedApprovers` array on each condition (empty array when
+none); the snake_case key exists only inside `config`.
 
 ### Activity (ActivityReport)
 
