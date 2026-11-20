@@ -92,6 +92,10 @@ POST /request/control           → saves a draft + opens an approval ticket
 POST /request/policy            → saves a draft + opens an approval ticket
 POST /request/policy_exception  → saves a draft + opens an approval ticket
 POST /request/gate              → saves a draft + opens an approval ticket
+PUT  /request/control           → updates an existing entity: draft + approval ticket
+PUT  /request/policy            → updates an existing entity: draft + approval ticket
+PUT  /request/policy_exception  → updates an existing entity: draft + approval ticket
+PUT  /request/gate              → updates an existing entity: draft + approval ticket
 ```
 
 Two distinct routes per type, not one:
