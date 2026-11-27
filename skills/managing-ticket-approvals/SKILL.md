@@ -70,8 +70,7 @@ Decision logic:
    explicit guidance.
 2. If the guidance says to **deny** this type of change → deny (cite the
    specific rule).
-3. If the guidance says to **escalate** → `comment`, advisory only (cite the
-   rule). Escalation is a confidence tier (`< 0.50`), not a decision value.
+3. If the guidance says to **escalate** → decide `comment` so a human decides (cite the rule).
 4. If the guidance **approves** this type of change → approve (cite the
    rule).
 5. If no guidance covers the scenario, fall back to the inputs in
