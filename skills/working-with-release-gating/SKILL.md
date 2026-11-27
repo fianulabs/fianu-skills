@@ -47,13 +47,13 @@ alone (annotations excuse a non-pass).
 ## Gate attestation summary
 
 ```
-GET /gates/:gate_id/attestations/summary?limit=&orderBy=&page=&from=&to=&query=&result=&status=&gateVersion=
+GET /gates/:gate_id/attestations/summary?limit=&orderBy=&page=&from=&to=&query=&result=&status=&entityVersion=
 ```
 
 Returns the gate's attestation roll-up — paged records each carrying a
 `result` and `status`. Filters: `result` (e.g. `pass`, `fail`), `status`
-(e.g. `error`), `from` / `to` (RFC3339), `query`, and `gateVersion` to scope
-to a specific gate version. The response is either a bare array (legacy) or an
+(e.g. `error`), `from` / `to` (RFC3339), `query`, and `entityVersion` (semantic
+version or version UUID) to scope to a specific gate version. The response is either a bare array (legacy) or an
 `{ items, pagination }` envelope. The `result` / `status` values are the
 attestation vocabulary owned by `working-with-attestations`.
 

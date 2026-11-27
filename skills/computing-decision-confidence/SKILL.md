@@ -63,9 +63,12 @@ must reason from the change itself. Raise scrutiny (lower confidence) when:
 - **Control criticality** — the parent control is tagged SOX-relevant or
   otherwise compliance-critical.
 
-Each scrutiny signal nudges confidence down. The agent does not need a
-formal weighted formula — these are intuitions encoded in the comment so
-a human can verify.
+Each scrutiny signal nudges confidence down. When reasoning by hand there
+is no formal formula — these are intuitions encoded in the comment so a
+human can verify. The in-platform agent instead reports several
+self-assessed signals (its own confidence, rule clarity, context
+completeness, change complexity) and the platform combines them as a
+weighted sum before applying the 0.70 cap and the gate table.
 
 ## Worked example
 

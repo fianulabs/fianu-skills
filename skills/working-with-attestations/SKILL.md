@@ -61,6 +61,7 @@ annotation is rolled up as passing by the gate (see
 GET /entities/:entity_id/attestations?limit=&orderBy=&page=
 GET /notes/attestations/:uuid/policies
 GET /notes/attestations/:uuid/meta
+GET /assets/:asset/controls/:control/meta
 GET /notes/:uuid?format=raw
 GET /notes/:uuid/chain
 ```
@@ -70,6 +71,7 @@ GET /notes/:uuid/chain
 | `GET /entities/:entity_id/attestations` | Paged attestation history for a control entity. `orderBy` = `desc` \| `asc`. Use for the "last N results" trend cited by `analyzing-tickets`. Through the public proxy this is reachable as `/api/controls/:entity_id/attestations`; the param is the entity **id**, not the entity key. |
 | `GET /notes/attestations/:uuid/policies` | The policy (and variation) that applied to this attestation. |
 | `GET /notes/attestations/:uuid/meta` | **Policy provenance only.** The asset, the policy hierarchy (each level with its requirements and indexes), the `computedPolicy` with server-computed provenance under `computedPolicy.sections`, asset properties, and integrity. See the warning below. |
+| `GET /assets/:asset/controls/:control/meta` | The same meta shape computed against the **latest** policy state for an asset and control (`:control` is the control entity id) — the live counterpart, versus the policies actually applied to one attestation. |
 | `GET /notes/:uuid?format=raw` | The complete note — `detail`, `display`, `policy`, `parent`. **This is where measured values and violation rows live.** |
 | `GET /notes/:uuid/chain` | The whole origin → occurrence → attestation chain in one call. |
 
