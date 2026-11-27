@@ -27,6 +27,14 @@ jobs:
           sh scripts/validate-skills.sh
           python3 -m unittest scripts/test_validate_skills.py
 
+      - name: Warn when a pull request is too big to read end to end
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          python3 -m unittest scripts/test_check_diff_size.py
+          sh scripts/check-diff-size.sh "origin/$BASE_REF"
+
       - name: Every pointer resolves inside its bundle
         run: |
           python3 -m unittest scripts/test_build_bundles.py

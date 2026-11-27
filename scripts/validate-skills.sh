@@ -106,6 +106,29 @@ for dir in $skill_dirs; do
         echo "FAIL: $skill missing or empty 'description:' in frontmatter" >&2
         FAIL=1
     fi
+
+    # Size limits: a long skill or description costs every agent that loads it.
+    lines="$(awk 'END { print NR }' "$skill")" # counts a last line with no newline
+    if [ "$lines" -gt 500 ]; then
+        echo "FAIL: $skill is $lines lines (limit 500); move detail into references/" >&2
+        FAIL=1
+    fi
+    # The value is read from one line, so it must be on one line to be measured.
+    case "$desc" in
+        '>'*|'|'*) echo "FAIL: $skill description must be on one line, not a block scalar" >&2; FAIL=1 ;;
+        '"'*) case "$desc" in ?*'"') ;; *) echo "FAIL: $skill description must be on one line" >&2; FAIL=1 ;; esac ;;
+    esac
+    # Characters, not bytes, in any locale: drop UTF-8 continuation bytes, count the rest.
+    chars="$(printf %s "$desc" | LC_ALL=C tr -d '\200-\277' | wc -c | tr -d ' ')"
+    if [ "$chars" -gt 1024 ]; then
+        echo "FAIL: $skill description is $chars characters (limit 1024)" >&2
+        FAIL=1
+    fi
+    # Emphasis words outside code fences: a warning, never a failure.
+    loud="$(awk '/^```/ {f=!f; next} !f' "$skill" | grep -cwE 'CRITICAL|MUST|NEVER|ALWAYS|IMPORTANT' || true)"
+    if [ "$loud" -gt 0 ]; then
+        echo "WARN: $skill: $loud lines use CRITICAL/MUST/NEVER/ALWAYS/IMPORTANT; say why instead of shouting" >&2
+    fi
 done
 
 # --- Check 4: canary strings ---
