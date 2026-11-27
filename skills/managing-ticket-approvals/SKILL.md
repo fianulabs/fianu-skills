@@ -58,7 +58,7 @@ Via `diffing-policies`. The aggregate direction (`net_relaxation` /
 
 Synthesize the inputs into a structured analysis:
 
-- **Decision**: `approve` | `deny` | `escalate` | `comment`
+- **Decision**: `approve` | `deny` | `comment`
 - **Confidence**: 0.0 – 1.0
 - **Justification**: 2–5 sentences
 - **Rules applied**: which LLM context rules influenced the decision and how
@@ -70,7 +70,8 @@ Decision logic:
    explicit guidance.
 2. If the guidance says to **deny** this type of change → deny (cite the
    specific rule).
-3. If the guidance says to **escalate** → escalate (cite the rule).
+3. If the guidance says to **escalate** → `comment`, advisory only (cite the
+   rule). Escalation is a confidence tier (`< 0.50`), not a decision value.
 4. If the guidance **approves** this type of change → approve (cite the
    rule).
 5. If no guidance covers the scenario, fall back to the inputs in

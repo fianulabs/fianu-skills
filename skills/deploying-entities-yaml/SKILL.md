@@ -203,11 +203,13 @@ expressions use `expressions[].source`; policy/gate *criteria* use the singular
 combine field `combineWith` (camelCase, per the server struct tag), not
 `combine_with`.
 
-- `detail.kind` is **server-controlled** — the public deploy endpoint forces
-  every user-authored index to `kind: write`. Leave it unset. `default`
+- `detail.kind` defaults to `write` when omitted. Leave it unset: `default`
   (the auto-managed per-asset-type catch-all) and `write-ahead` are
-  reserved and cannot be set from source. Don't author `default.<asset_type>`
+  reserved, and the deploy path does not coerce them to `write` the way
+  `POST /indexes` does. Don't author `default.<asset_type>`
   catch-all indexes by hand; the server maintains one per active asset type.
+  `combineWith` defaults to `AND`, and at least one expression with a
+  `source` is required.
 - CLI deploy of an index requires a server with the index deployer
   registered. Against a server without it, the
   deploy returns `deployer not registered for type index`.
@@ -243,7 +245,10 @@ server materialises it as a separate `policy` entity whose `control.path`
 references the gate, so a gate with no policy enforces nothing.
 `gate.checks[].matching[]` carries per-scope `protectionLevel` overrides using
 the same CEL/index criteria shape (most-restrictive wins: `enforce` >
-`check`).
+`check`). Each check also takes `gatingSources` and `completionAction`, and
+`gate.updatesReleaseStatus` (off by default) lets the gate's verdict move a
+release's status. A deploy never sets or clears a gate's pause; an active
+pause is carried forward unchanged.
 
 > ⚠️ Unlike policies/exceptions/controls, YAML gate packages are rarely used —
 > the Terraform `fianu_gate` resource (see `deploying-entities-terraform`) is the

@@ -44,6 +44,10 @@ Order:
 3. Aggregate: when both exist, prefer policy-level for policy-specific
    decisions; consult control-level for broader guidance.
 
+The platform's own approval agent reads the pod under the key `default` and
+treats the parent control's pod as a fallback: it fetches the parent only when
+the target itself has no pod, and uses whichever pod it finds first.
+
 If neither the target nor its parent has a pod, the agent operates without
 explicit owner guidance.
 

@@ -274,10 +274,10 @@ not validate the inner shape. Same constraint as the YAML path.
 use `expression` for their inline CEL — the key differs by surface. See
 `writing-cel-expressions`.
 
-**`fianu_index` — `kind` differs by surface.** The Terraform example sets
-`kind = "write-ahead"`; the YAML/CLI public deploy endpoint forces
-user-authored indexes to `kind: write` (see `deploying-entities-yaml`). Mixing
-surfaces on one index produces a `kind` diff on import.
+**`fianu_index` — leave `kind` unset.** It defaults to `write`; `write-ahead`
+and `default` are reserved (see `deploying-entities-yaml`). The deploy path
+does not coerce `kind`, so a `kind` set in HCL differs from the default on
+an index deployed from YAML.
 
 **`fianu_gate` — a gate with no policy enforces nothing.** Author the policy
 inline via `detail.policy` (it deploys as a separate policy entity keyed to the
@@ -365,7 +365,10 @@ manually.
 1. Provider builds the entity Go struct (`*entities.Control`, `*entities.Policy`, …) from HCL.
 2. JSON-marshals the struct.
 3. Base64-encodes the JSON into the `X-Fianu-Raw-Content` request header.
-4. POSTs an empty body to `/entities/artifacts/deploy`.
+4. POSTs to `/entities/artifacts/deploy` with a small JSON body that carries
+   only the entity type, path, and optional id and version, plus an
+   `X-Fianu-CI-System-Hash` header holding the SHA256 of the entity JSON.
+   A plan-only run adds `?dryRun=true`.
 5. Server runs the SHA256 idempotency check. Unchanged input returns
    `action: "skipped"`; changed input drafts a new version and opens an
    approval ticket.

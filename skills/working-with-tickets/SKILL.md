@@ -193,7 +193,10 @@ Log that the ticket was already resolved and skip.
 
 If a ticket has multiple pending conditions, an agent should only act on
 conditions where its actor identity appears in `config.resolved_approvers`
-or where the agent has system-level authorization.
+or where the agent has system-level authorization. Only conditions that have
+approvers can be decided this way; conditions with none (gating, manual,
+prerequisite, rule-driven) are decided by the platform itself, and an approve
+or deny on them from a person or the agent is refused with access denied.
 
 ### Target entity not found
 
