@@ -44,12 +44,15 @@ GET /entities/indexes/:key/examine
 POST   /entities/indexes
 PATCH  /entities/indexes/:key
 DELETE /entities/indexes/:key
+POST   /entities/indexes/:key/refresh
 ```
 
 - `POST` body is the StandardEntity envelope (the same shape the entity
   mappers produce). `POST` and `PATCH` return the bare index with its compute
   state, the same shape as `GET /entities/indexes/:key`.
 - `DELETE` is a **soft-delete / archive**, not a hard delete.
+- `POST .../refresh` force-recomputes an index inline (admin-only) — use it to
+  clear a `stale` or `error` state instead of waiting for the worker.
 
 Like other entities, writes enter as drafts and open an approval ticket — see
 `working-with-entities` for the draft → approval flow.
@@ -91,7 +94,7 @@ server-controlled — the public deploy path forces user indexes to `write`;
 |---|---|---|
 | `F_72006` IndexReferenceNotFound | 404 | No index at that key. |
 | `F_72007` IndexReferenceArchived | 422 | Index exists but is archived. |
-| `F_72008` IndexRecomputeError | 503 | Members couldn't be computed. |
+| `F_72008` IndexRecomputeError | 422 | Members couldn't be computed (retriable; the worker retries). |
 | `F_40008` InvalidPreviewPagination | 400 | Bad `page`/`limit`. |
 
 ## Edge cases
