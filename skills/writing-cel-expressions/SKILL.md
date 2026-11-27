@@ -39,7 +39,8 @@ The Fianu UI authors the cast form and persists it verbatim.
 |---|---|
 | `.(string)` | text fields (the default; most asset fields are string) |
 | `.(list_string)` | list-of-string fields (labels, tags) |
-| `.(int64)` / `.(int)` | integer fields |
+| `.(int64)` | integer fields |
+| `.(double)` | floating-point fields |
 | `.(bool)` | boolean fields |
 
 - The asset being scoped is `$asset`. A per-type form `$<assetType>.<field>`

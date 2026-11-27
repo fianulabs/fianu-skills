@@ -29,6 +29,7 @@ GET /entities/indexes?entityStatus=&recomputeStatus=&assetTypePath=&indexType=&p
 GET /entities/indexes/:key?includeArchived=
 GET /entities/indexes/:key/members?page=&limit=
 GET /entities/indexes/:key/examine
+POST /entities/indexes/:key/refresh
 ```
 
 | Endpoint | Use |
@@ -37,6 +38,7 @@ GET /entities/indexes/:key/examine
 | `GET /entities/indexes/:key` | Fetch one (with its compute state). `:key` is a UUID **or** a path — the backend routes on `IsValidUUID`, so forward the segment unchanged. |
 | `GET /entities/indexes/:key/members` | The assets the worker has matched to this index (paged). |
 | `GET /entities/indexes/:key/examine` | Ops-triage detail. **Not** part of the user-facing surface — use only for debugging. |
+| `POST /entities/indexes/:key/refresh` | Force an inline recompute of the index; use to clear a stuck `error` state and surface the underlying error. |
 
 ## Write endpoints
 
@@ -94,7 +96,7 @@ server-controlled — the public deploy path forces user indexes to `write`;
 |---|---|---|
 | `F_72006` IndexReferenceNotFound | 404 | No index at that key. |
 | `F_72007` IndexReferenceArchived | 422 | Index exists but is archived. |
-| `F_72008` IndexRecomputeError | 422 | Members couldn't be computed (retriable; the worker retries). |
+| `F_72008` IndexRecomputeError | 422 | Members couldn't be computed. |
 | `F_40008` InvalidPreviewPagination | 400 | Bad `page`/`limit`. |
 
 ## Edge cases
