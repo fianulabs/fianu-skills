@@ -51,6 +51,20 @@ Sum the classifications:
 Aggregate direction surfaces in analysis and approval workflows as a
 one-line summary: "Direction: net relaxation".
 
+## Getting the two versions
+
+`GET /entities/compare/{base}..{head}` compares two entity versions. Each ref
+is an entity key, `entity-key@version`, or a version UUID; pass
+`entityType` (or `baseEntityType` / `headEntityType`) in the query, for
+example `policy`. The response has `status` (`identical` or `different`),
+`additions`, `deletions`, a unified-diff `patch`, and `changes[]`, each with
+`path` (dot-bracket form such as `policy[0].policy.coverage.minimum`), `op`
+(`added`, `removed`, or `modified`), `base`, and `head`. A whole added or
+removed array element collapses into one change at the element's path.
+`baseDetail` and `headDetail` carry the resolved details the diff was
+computed from. The endpoint does not classify direction; apply the
+classification below to its `changes[]` or to the two details.
+
 ## Variation-aware diffing
 
 Modern policies carry a variation list (`detail.policy[]` in YAML and JSON) rather than a single threshold

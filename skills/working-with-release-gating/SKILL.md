@@ -62,6 +62,7 @@ attestation vocabulary owned by `working-with-attestations`.
 ```
 POST /releases
 GET  /assets/releases/:uuid/status
+PATCH /assets/releases/:uuid/status
 POST /assets/releases/:uuid/evidence/scan
 POST /assets/releases/:uuid/evidence/resync
 POST /assets/releases/:uuid/evidence/modifiers
@@ -72,6 +73,7 @@ GET  /evidence/assets/release/:uuid/links/snapshot?project=results_only
 |---|---|
 | `POST /releases` | Create a release (a versioned bundle of assets to gate). |
 | `GET /assets/releases/:uuid/status` | The release's lifecycle state and approval. Returns `releaseUuid`, `identifier`, `status` (the release's lifecycle status property, capitalized, e.g. `Pending`, `Approved`, `Released`), `approvalState`, optional `approvalResult`, and the release's approval `tickets`. It does not return per-gate results — use the gate evaluation endpoints for those. |
+| `PATCH /assets/releases/:uuid/status` | Move the release to another status. Body `{ "status": "..." }`; returns the updated status response. Release owners can transition freely; application owners who are resolved approvers on the release's ticket are limited by the ticket's state and result; anyone else is refused. Cancel and reject close the approval ticket; moving back to pending reopens it. |
 | `POST …/evidence/scan` | Trigger evidence collection for the release. |
 | `POST …/evidence/resync` | Re-pull evidence (e.g. after a late attestation lands). |
 | `POST …/evidence/modifiers` | Apply evidence modifiers (overrides / annotations) to the release. |

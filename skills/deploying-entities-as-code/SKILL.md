@@ -46,9 +46,11 @@ flow. The difference is only in how the bytes get to the server.
 | `policy_exception` | ✅ (exception template) | ✅ via `fianu_policy` with `type = "exception"` | Same wire shape; CLI and provider treat exception as a policy subtype. |
 | `gate` | ✅ (`type: "gate"`) | ✅ `fianu_gate` | Full parity. Inline policy + gate checks; the CLI auto-detects the type from the file's root `type` field. |
 | `index` | ✅ (`type: "index"`) | ✅ `fianu_index` | Reusable CEL asset-scope. The CLI deploy requires a server with the index deployer registered; against a server without it, an index deploy returns `deployer not registered for type index`. |
-| `environment` | ❌ | ⏳ v0.1.x `fianu_environment` | Neither path stable yet. The deploy endpoint has a deployer registered for it. |
-| `target` | ❌ | ⏳ v0.1.x `fianu_target` | Neither path stable yet. The deploy endpoint has a deployer registered for it. |
-| `collection` | ❌ | ⏳ v0.1.x `fianu_collection` | Neither path stable yet. The deploy endpoint has a deployer registered for it. |
+| `environment` | ❌ | ✅ `fianu_environment` | Use Terraform. The deploy endpoint has a deployer registered for it. |
+| `target` | ❌ | ✅ `fianu_target` | Use Terraform. The deploy endpoint has a deployer registered for it. |
+| `collection` | ❌ | ✅ `fianu_collection` | Use Terraform. The deploy endpoint has a deployer registered for it. |
+
+The deploy endpoint also has deployers for tools, platforms, platform types, report templates, forms and instances; the provider's resource list is in `deploying-entities-terraform`.
 
 When the matrix isn't at parity for an entity type, the format choice is
 forced. Otherwise it's a workflow preference (see the picker below).
@@ -70,8 +72,8 @@ upload an entity:
   on the client, JSON-marshals it, base64-encodes the bytes into the
   `X-Fianu-Raw-Content` header, and POSTs.
 
-After ingress, both flow into `control_deployer.go` and produce the same
-entity row. A second deploy of an unchanged input — for either path —
+After ingress, both flow into the same server-side deployer and produce the
+same entity row. A second deploy of an unchanged input — for either path —
 returns `action: "skipped"` from the server and zero diff on the client
 side (no Terraform plan, no CLI activity).
 
@@ -82,7 +84,7 @@ Are you in a repo that already uses one format?
 ├─ yes → keep using it (don't mix formats per entity directory)
 └─ no  → ask:
          ├─ Do you need an environment, target, or collection?
-         │   └─ yes → Terraform (only path that exposes them; still ⏳ v0.1.x)
+         │   └─ yes → Terraform (only path that exposes them)
          ├─ Is this a fresh entities-as-code repo with controls, policies, indexes, or gates?
          │   └─ yes → YAML / CLI (closer to the official-controls layout, simpler authoring)
          └─ Are you already running Terraform for adjacent infra (Cognito, k8s, etc.)?
@@ -131,13 +133,16 @@ For format-specific details, see:
 
 ## Idempotency — what "unchanged" means
 
-The SHA256 gate is computed over the normalized server-side representation
-of the entity, not the on-disk bytes. Things that look like a change but
-hash identically and return `action: "skipped"`:
+The server SHA256-hashes the submitted entity content and compares it with
+the hash stored on the entity's latest version. A caller may supply its own
+hash in the `X-Fianu-CI-System-Hash` header, and the server then uses that
+value instead of hashing the body; the Terraform provider hashes the entity
+JSON it builds. Only a match returns `action: "skipped"`, so treat any change
+to the submitted content as a change. Things that do not alter the submitted
+content, and so hash identically:
 
-- Reordering keys inside a YAML map.
-- Changing comments or blank lines in `spec.yaml`.
 - Renaming a Terraform local variable that only affects HCL identifiers.
+- Re-running an apply with no change to the resolved attribute values.
 
 Things that always trigger a new version:
 
@@ -147,6 +152,16 @@ Things that always trigger a new version:
   policy template, relations, assets, results, config).
 - Renaming the entity path (this is a **replacement** in Terraform and a
   new entity in CLI — both treat path as immutable).
+
+## Deployment modes and dry run
+
+The request's optional `deploymentMode` is `none` (the default), `overwrite`,
+or `strict`. With `none`, a changed existing control or gate is
+partially updated (the response lists `sectionsUpdated`), and a new entity is
+created in full; other entity types are replaced in full. `overwrite` always
+replaces the whole entity, and `strict` does the same after verifying the
+content against its source repository. Add `?dryRun=true` to validate without
+creating anything.
 
 ## Edge cases
 
